@@ -1,0 +1,25 @@
+cmake_minimum_required(VERSION 3.0.0)
+project(runtests)
+
+# include directories
+include_directories(../../include)
+
+# set compiler
+set(CXX "mpic++")
+
+# add compiler flags
+set(CXX_FLAGS "--std=c++11 -O3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_FLAGS}")
+
+# link to mpi libs
+set(CMAKE_CXX_STANDARD_LIBRARIES -lmpi)
+
+# will compile and link all file matching this pattern
+#file(GLOB TESTFILES "src/test_*.cpp")
+file(GLOB TESTFILES "src/runtests.cpp")
+
+# compile with bound checking
+# add_definitions(-DDGRIDS_ARRAY_CONFIG_CHECKBOUNDS=true)
+
+# create executables
+add_executable(runtests src/runtests.cpp ${TESTFILES})
