@@ -18,6 +18,7 @@ bool _isboundary_r(std::array<int, NDIMS> coords, std::array<int, NDIMS> size, i
 
 template <size_t NDIMS>
 class DArraySpec {
+private:
     MPI_Comm                           _comm; // communicator
     int                           _comm_rank; // rank within communicator
     int                           _comm_size; // size of communicator
@@ -29,7 +30,6 @@ class DArraySpec {
     std::array<int, NDIMS>          _nhalo_l; // number of padding points on 'left'  side (low index)
     std::array<int, NDIMS>          _nhalo_r; // number of padding points on 'right' side (high index)
 
-public:
     // ===================================================================== //
     // CONSTRUCTOR
     DArraySpec(MPI_Comm comm, std::array<int, NDIMS> proc_grid_size,
@@ -108,6 +108,10 @@ public:
         for (int dim = 0; dim != NDIMS; dim++)
             _nelements *= _nhalo_l[dim] + _array_size[dim] + _nhalo_r[dim];
         return _nelements;
+    }
+
+    inline std::array<int, NDIMS> size() {
+        return _array_size;
     }
 };
 
