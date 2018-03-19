@@ -1,11 +1,14 @@
+#pragma once
+#include <mpi.h>
+
 namespace DArrays {
 namespace MPISession {
 
-void Initialize() {
+inline void Initialize() {
     MPI_Init(nullptr, nullptr);
 }
 
-void Finalize() {
+inline void Finalize() {
     MPI_Finalize();
 }
 
