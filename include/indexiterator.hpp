@@ -2,7 +2,6 @@
 #include<iostream>
 
 namespace DArrays {
-namespace Iterators {
 
 template <size_t NDIMS>
 class IndexIterator {
@@ -40,11 +39,21 @@ private:
     };
 
 public:
-    template <typename... NS>
+    // ===================================================================== //
+    // CONSTRUCTORS
+    // from integer arguments
+    template <typename... NS,
+              typename ENABLER = std::enable_if_t< (... && std::is_integral_v<NS>) >>
     IndexIterator(NS... ns) {
         static_assert(sizeof...(ns) == NDIMS, "invalid iterator specification");
         size = {ns...};
     }
+
+    // from an array of integer sizes
+    template<typename T, 
+             typename ENABLER = std::enable_if_t< std::is_integral_v<T> >>
+    IndexIterator(std::array<T, NDIMS> size) 
+        : size (size) {}
 
     _Iter begin() { 
         std::array<int, NDIMS> state = {0};
@@ -57,5 +66,4 @@ public:
     }
 };
 
-}
 }
