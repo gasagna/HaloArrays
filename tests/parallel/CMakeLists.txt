@@ -9,7 +9,7 @@ include_directories(../../include)  # for DArrays
 set(CXX "mpic++")
 
 # add compiler flags
-set(CXX_FLAGS "--std=c++11 -O3")
+set(CXX_FLAGS "--std=c++1z -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_FLAGS}")
 
 # link to mpi libs
@@ -19,7 +19,7 @@ set(CMAKE_CXX_STANDARD_LIBRARIES -lmpi)
 file(GLOB TESTFILES "src/test_*.cpp")
 
 # compile with bound checking
-# add_definitions(-DDGRIDS_ARRAY_CONFIG_CHECKBOUNDS=true)
+add_definitions(-DDARRAY_CONFIG_CHECKBOUNDS=true)
 
 # create executables
 add_executable(runtests src/runtests.cpp ${TESTFILES})

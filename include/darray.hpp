@@ -5,7 +5,7 @@
 #include <mpi.h>
 
 #ifndef DARRAY_CONFIG_CHECKBOUNDS
-#define DARRAY_CONFIG_CHECKBOUNDS true
+#define DARRAY_CONFIG_CHECKBOUNDS false
 #endif
 
 namespace DArrays {
