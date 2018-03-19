@@ -15,8 +15,8 @@ private:
 public:
     // ===================================================================== //
     // CONTAINER INTERFACE
-    using value_type = T;
-    using iterator   = T*;
+    using value_type     = T;
+    using DArrayIterator = T*;
 
     // ===================================================================== //
     // CONSTRUCTOR/DESTRUCTOR
@@ -49,8 +49,14 @@ public:
 
     // ===================================================================== //
     // ITERATION OVER ALL DATA
-    iterator begin() { return _data; }
-    iterator end()   { return _data + _spec.nelements(); }
+    DArrayIterator begin() { return _data; }
+    DArrayIterator end()   { return _data + _spec.nelements(); }
+
+    // ===================================================================== //
+    // ITERATOR OVER THE IN-DOMAIN INDICES 
+    inline IndexIterator<NDIMS> indices () {
+        return IndexIterator<NDIMS>(_spec.size())
+    }
 
     // ===================================================================== //
     // UPDATE HALO POINTS - specialisations for NDIMS = 1, 2, 3 elsewhere
