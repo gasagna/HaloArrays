@@ -15,12 +15,14 @@ namespace DArrays {
 namespace Utils {
 
 template <size_t NDIMS>
-bool _is_on_leftboundary(std::array<int, NDIMS> proc_grid_coords, std::array<int, NDIMS> proc_grid_size, int dim) {
+bool _is_on_leftboundary(std::array<int, NDIMS> proc_grid_coords, 
+                         std::array<int, NDIMS> proc_grid_size, int dim) {
     return proc_grid_coords[dim] == 0;
 }
 
 template <size_t NDIMS>
-bool _is_on_right_boundary(std::array<int, NDIMS> proc_grid_coords, std::array<int, NDIMS> proc_grid_size, int dim) {
+bool _is_on_right_boundary(std::array<int, NDIMS> proc_grid_coords, 
+                           std::array<int, NDIMS> proc_grid_size, int dim) {
     return proc_grid_coords[dim] == proc_grid_size[dim] - 1;
 }
 }
