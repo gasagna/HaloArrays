@@ -3,50 +3,40 @@
 #include <numeric>
 #include <vector>
 #include <chrono>
+#include <cmath>
 #include <mpi.h>
-
-const int NREP = 10000;
-const int N = 30;
 
 int main () {
 
     DArrays::MPISession::Initialize();
     
 
-    std::array<int, 3> proc_grid_size = {1, 1, 1}; // to be run on 4 processor
-    std::array<int, 3> array_size = {N, N, N};
-    std::array<int, 3> isperiodic = {false, false, false};
-    std::array<int, 3> nhalo_out = {1, 1, 1};
-    int nhalo_in = 1;
+    DArrays::Topology::DArrayTopology<3> topo(MPI_COMM_WORLD,          // comm
+                                              {1,     1,     1},       // grid size
+                                              {false, false, false});  // is periodic
 
-    DArrays::DArray<double, 3> A(MPI_COMM_WORLD,
-                                 proc_grid_size,
-                                 array_size,
-                                 isperiodic, nhalo_out, nhalo_in);
-
-    // DArrays::DArray<double, 3> B(MPI_COMM_WORLD,
-                                //  proc_grid_size,
-                                //  array_size,
-                                //  isperiodic, nhalo_out, nhalo_in);
+    DArrays::DArray<double, 3> A(topo, {100, 100, 100}, {1, 1, 1}, 1);
+    DArrays::DArray<double, 3> B(topo, {100, 100, 100}, {1, 1, 1}, 1);
 
     // fill with garbage
-    for (auto[i, j, k] : A.indices())
+    for (auto [i, j, k] : A.indices())
         A(i, j, k) = i*j*k;
 
     // compute sum of array pieces
     double sum = 0;
-    auto t0 = std::chrono::steady_clock::now();
-    
-    for (int n = 0; n<NREP; n++) {
-        for (auto [i, j, k] : A.indices())
-            A(i, j, k) = A(i, j, k) - A(i, j, k + 1) - A(i, j, k - 1) -
-                                      A(i, j + 1, k) - A(i, j - 1, k) -
-                                      A(i + 1, j, k) - A(i - 1, j, k);
-    }
+    auto t0 = std::chrono::steady_clock::now();    
 
+    for (auto [i, j, k] : A.indices())
+        B(i, j, k) = A(i, j, k) - B(i, j, k + 1) - B(i, j, k - 1) -
+                                  B(i, j + 1, k) - B(i, j - 1, k) -
+                                  B(i + 1, j, k) - B(i - 1, j, k);
+    
     auto t1 = std::chrono::steady_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count() / (double)NREP;
+    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
     std::cout << "us\n";
+    // trick the compilar not to elide the loop
+    if (B[0])
+        std::cout << "\n";
 
     DArrays::MPISession::Finalize();
 
