@@ -65,18 +65,14 @@ public:
         : _array_size  (array_size ) 
         , _topo        (topo       ) {
       
-            // define size of local array
-            for (int dim = 0; dim != NDIMS; dim++)
+            // define size of local array and number of left/right halo points
+            for (auto dim : LinearRange(0, NDIMS))
                 _local_arr_size[dim] = _array_size[dim] / topo.grid_size_along_dim(dim);
-
-            // depending on location we change the number of halo points
-            for (int dim = 0; dim != NDIMS; dim++)
                 _nhalo_l[dim] = topo.is_on_left_boundary(dim) || topo.is_periodic_along_dim(dim) ? 
                                     nhalo_out[dim] : nhalo_in;
-
-            for (int dim = 0; dim != NDIMS; dim++)
                 _nhalo_r[dim] = topo.is_on_right_boundary(dim) || topo.is_periodic_along_dim(dim) ? 
                                     nhalo_out[dim] : nhalo_in;
+            }
 
             // allocate memory buffer
             _data = new T[nelements()];
@@ -120,7 +116,7 @@ public:
     // ~~~ size of memory buffer, including halo ~~~
     inline size_t nelements() const {
         size_t _nelements = 1;
-        for (int dim = 0; dim != NDIMS; dim++)
+        for (auto dim : LinearRange(0, NDIMS))
             _nelements *= _nhalo_l[dim] + _local_arr_size[dim] + _nhalo_r[dim];
         return _nelements;
     }
