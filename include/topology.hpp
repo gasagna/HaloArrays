@@ -5,8 +5,24 @@
 #include <mpi.h>
 
 namespace DArrays {
-namespace Topology {
+namespace Topo {
 
+// ===================================================================== //
+// A system to tag boundaries for dispatch
+struct LeftBoundary {
+    LeftBoundary(size_t dim) : dim (dim), value (-1) {}    
+    const int value;
+    size_t dim;
+};
+
+struct RightBoundary {
+    RightBoundary(size_t dim) : dim (dim), value (-1) {}
+    const int value;
+    size_t dim;
+};
+
+// ===================================================================== //
+// DEFINES TOPOLOGY OF THE DISTRIBUTED ARRAY
 template <size_t NDIMS>
 class DArrayTopology {
 private:
@@ -61,20 +77,21 @@ public:
 
     // ===================================================================== //
     // QUERIES FOR POSITION ON THE PROCESSOR GRID
-    inline bool is_on_left_boundary(size_t dim) {
-        // FIXME: IN CASE WE HAVE A PERIODIC DOMAIN
-        return _grid_coords[dim] == 0;
+    template<typename DIM>
+    inline bool is_on(LeftBoundary<DIM>) {
+        if (_is_periodic[DIM]) return false;
+        return _grid_coords[DIM] == 0;
     }
 
-    inline bool is_on_right_boundary(size_t dim) {
-        // FIXME: IN CASE WE HAVE A PERIODIC DOMAIN
-        return _grid_coords[dim] == _grid_size[dim] - 1;
+    template <typename DIM>
+    inline bool is_on(RightBoundary<DIM>) {
+        if (_is_periodic[DIM]) return false;
+        return _grid_coords[DIM] == _grid_size[DIM] - 1;
     }
 
     inline bool is_on_boundary() {
-        // FIXME: IN CASE WE HAVE A PERIODIC DOMAIN
-        for (auto dim = 0; dim != NDIMS; dim++)
-            if (is_on_left_boundary(dim) || is_on_right_boundary(dim))
+        for (auto dim : DimRange<NDIMS>())
+            if (is_on(LeftBoundary<dim>()) || is_on(RightBoundary<dim>()))
                 return true;
         return false;
     }
