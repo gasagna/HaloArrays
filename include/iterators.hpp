@@ -130,12 +130,12 @@ private:
 
         // ===================================================================== //
         // ADD/REMOVE LINEAR INDEX
-        inline reference operator += (difference_type n) {
+        inline _Iter& operator += (difference_type n) {
             _addlinearindex(n);
             return *this;
         }
 
-        inline reference operator -= (difference_type n) {
+        inline _Iter& operator -= (difference_type n) {
             return *this += -n;
         }
 
