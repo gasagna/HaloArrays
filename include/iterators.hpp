@@ -12,12 +12,12 @@ namespace DArrays::Iterators {
 class LinearRange {
 private:
     // range iterator
-    class RangeIter {
+    class _LinearRangeIter {
         private:
             int      _state;
             bool _isforward;
         public:
-            RangeIter (int state, bool isforward) 
+            _LinearRangeIter (int state, bool isforward) 
                 : _state     (state    )
                 , _isforward (isforward) {} 
 
@@ -25,12 +25,12 @@ private:
                 return _state; 
             }
 
-            inline RangeIter operator ++ () {
+            inline _LinearRangeIter operator ++ () {
                 _isforward ? _state++ : _state--;
                 return *this;
             }
 
-            inline bool operator != (RangeIter& other) const {
+            inline bool operator != (_LinearRangeIter& other) const {
                 return _state != other._state;
             }
         };
@@ -40,8 +40,8 @@ private:
 public:
     LinearRange(int from, int to) 
         : _from (from), _to (to) {}
-    RangeIter begin() { return {_from, _from < _to}; }
-    RangeIter   end() { return {_from < _to ? _to + 1 : _to - 1, _from < _to}; }
+    _LinearRangeIter begin() { return {_from, _from < _to}; }
+    _LinearRangeIter   end() { return {_from < _to ? _to + 1 : _to - 1, _from < _to}; }
 };
 
 
@@ -53,7 +53,7 @@ class IndexRange {
 private:
     std::array<int, NDIMS> _size;      // array size
 
-    class _Iter {
+    class _IndexRangeIter {
     public:
         // ===================================================================== //        
         // ITERATOR TRAITS
@@ -91,7 +91,7 @@ private:
     public:
         // ===================================================================== //
         // CONSTRUCTOR/DESTRUCTOR
-        _Iter(std::array<int, NDIMS> size, std::array<int, NDIMS> state)
+        _IndexRangeIter(std::array<int, NDIMS> size, std::array<int, NDIMS> state)
             : _size       (size )  
             , _state      (state) {
                 _size_prod[0] = 1;
@@ -111,7 +111,7 @@ private:
 
         // ===================================================================== //
         // INCREMENT
-        inline _Iter operator ++ () {
+        inline _IndexRangeIter operator ++ () {
             _state[0]++;
             // TODO: benchmark this compare to simpler loop. Is the
             // compiler able to unroll this efficiently?
@@ -128,30 +128,30 @@ private:
 
         // ===================================================================== //
         // ADD/REMOVE LINEAR INDEX
-        inline _Iter& operator += (difference_type n) {
+        inline _IndexRangeIter& operator += (difference_type n) {
             _addlinearindex(n);
             return *this;
         }
 
-        inline _Iter& operator -= (difference_type n) {
+        inline _IndexRangeIter& operator -= (difference_type n) {
             return *this += -n;
         }
 
         // ===================================================================== //
         // EQUALITY AND COMPARISON
-        inline bool operator == (_Iter& other) const {
+        inline bool operator == (_IndexRangeIter& other) const {
             return _state == other._state;
         }
 
-        inline bool operator != (_Iter& other) const {
+        inline bool operator != (_IndexRangeIter& other) const {
             return !(*this == other);
         }
 
-        inline bool operator < (_Iter& other) const {
+        inline bool operator < (_IndexRangeIter& other) const {
             return _tolinearindex() < other._tolinearindex();
         }
 
-        inline bool operator > (_Iter& other) const {
+        inline bool operator > (_IndexRangeIter& other) const {
             return _tolinearindex() > other._tolinearindex();
         }
     };
@@ -173,12 +173,12 @@ public:
     IndexRange(std::array<T, NDIMS> size) 
         : _size (size) {}
 
-    _Iter begin() { 
+    _IndexRangeIter begin() { 
         std::array<int, NDIMS> _state = {0};
         return {_size, _state}; 
     }
     
-    _Iter end() {
+    _IndexRangeIter end() {
         // constuct state for one past the last
         std::array<int, NDIMS> _state = {0}; _state[NDIMS - 1] = _size[NDIMS - 1];
         return {_size, _state};
