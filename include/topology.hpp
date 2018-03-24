@@ -4,8 +4,7 @@
 #include <functional>
 #include <mpi.h>
 
-namespace DArrays {
-namespace Topo {
+namespace DArrays::Topo {
 
 // ===================================================================== //
 // A system to tag boundaries for dispatch
@@ -97,5 +96,4 @@ public:
     }
 };
 
-}
 }

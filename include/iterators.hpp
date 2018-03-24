@@ -4,9 +4,7 @@
 #include <numeric>
 #include <array>
 
-namespace DArrays {
-
-namespace Iterators {
+namespace DArrays::Iterators {
 
 ////////////////////////////////////////////////////////
 // linear range, from FROM to TO, end points included //
@@ -187,6 +185,4 @@ public:
     }
 };
 
-} // namespace Iterators
-
-} // namespace Darrays
+} // namespace Darrays::Iterators
