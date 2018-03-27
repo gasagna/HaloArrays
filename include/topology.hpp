@@ -88,6 +88,19 @@ public:
         }
         return false;
     }
+
+    // ===================================================================== //
+    // GET RANK OF NEIGHBOURING PROCESSOR
+    int neighbour_proc(BoundaryTag tag, size_t dim) {
+        int this_proc, that_proc;
+        MPI_Cart_shift(_comm,       // communicator
+                       dim,         // dimension
+                       tag,         // displacement
+                       &this_proc,  // this process rank
+                       &that_proc); // rank of right process
+        return that_proc;
+        // TODO: understand what happens when there is no neighbour
+    }
 };
 
 }
