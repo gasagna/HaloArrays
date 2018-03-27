@@ -8,7 +8,7 @@ template <typename T, size_t NDIMS>
 class DArray {
 private:
     T*                                      _data; // actual data
-    Topo::DArrayTopology<NDIMS>             _topo; // topologically-aware communicator object
+    Topo::DArrayTopology<NDIMS>         _topology; // topologically-aware communicator object
     std::array<int, NDIMS>            _array_size; // global array size
     std::array<int, NDIMS>        _local_arr_size; // local array size
     std::array<int, NDIMS>               _nhalo_left; // number of halo points on 'left'  side (low index)
@@ -62,8 +62,7 @@ public:
            std::array<int, NDIMS> array_size,
            std::array<int, NDIMS> nhalo_out, int nhalo_in)
         : _array_size  (array_size ) 
-        , _topo        (topo       ) {
-      
+        , _topology        (topo       ) {
             // define size of local array and number of left/right halo points
             for (auto dim : LinearRange(0, NDIMS))
                 _local_arr_size[dim] = _array_size[dim] / topo.grid_size_along_dim(dim);
