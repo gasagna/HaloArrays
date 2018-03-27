@@ -6,19 +6,7 @@
 
 namespace DArrays::Topo {
 
-// ===================================================================== //
-// A system to tag boundaries for dispatch
-struct LeftBoundary {
-    LeftBoundary(size_t dim) : dim (dim), value (-1) {}    
-    const int value;
-    size_t dim;
-};
 
-struct RightBoundary {
-    RightBoundary(size_t dim) : dim (dim), value (-1) {}
-    const int value;
-    size_t dim;
-};
 
 // ===================================================================== //
 // DEFINES TOPOLOGY OF THE DISTRIBUTED ARRAY
