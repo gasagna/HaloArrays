@@ -11,8 +11,8 @@ private:
     Topo::DArrayTopology<NDIMS>             _topo; // topologically-aware communicator object
     std::array<int, NDIMS>            _array_size; // global array size
     std::array<int, NDIMS>        _local_arr_size; // local array size
-    std::array<int, NDIMS>               _nhalo_l; // number of halo points on 'left'  side (low index)
-    std::array<int, NDIMS>               _nhalo_r; // number of halo points on 'right' side (high index)
+    std::array<int, NDIMS>               _nhalo_left; // number of halo points on 'left'  side (low index)
+    std::array<int, NDIMS>               _nhalo_right; // number of halo points on 'right' side (high index)
 
     // ===================================================================== //
     // INDEXING INTO LINEAR MEMORY BUFFER
@@ -22,7 +22,7 @@ private:
     }
 
     inline size_t __tolinearindex(size_t dim, int i) {
-        return i + _nhalo_l[dim];
+        return i + _nhalo_left[dim];
     }
 
     template <typename... INDICES>
@@ -67,9 +67,9 @@ public:
             // define size of local array and number of left/right halo points
             for (auto dim : LinearRange(0, NDIMS))
                 _local_arr_size[dim] = _array_size[dim] / topo.grid_size_along_dim(dim);
-                _nhalo_l[dim] = topo.is_on_left_boundary(dim) || topo.is_periodic_along_dim(dim) ? 
+                _nhalo_left[dim] = topo.is_on_left_boundary(dim) || topo.is_periodic_along_dim(dim) ? 
                                     nhalo_out[dim] : nhalo_in;
-                _nhalo_r[dim] = topo.is_on_right_boundary(dim) || topo.is_periodic_along_dim(dim) ? 
+                _nhalo_right[dim] = topo.is_on_right_boundary(dim) || topo.is_periodic_along_dim(dim) ? 
                                     nhalo_out[dim] : nhalo_in;
             }
 
@@ -122,7 +122,7 @@ public:
     inline size_t nelements() const {
         size_t _nelements = 1;
         for (auto dim : LinearRange(0, NDIMS))
-            _nelements *= _nhalo_l[dim] + _local_arr_size[dim] + _nhalo_r[dim];
+            _nelements *= _nhalo_left[dim] + _local_arr_size[dim] + _nhalo_right[dim];
         return _nelements;
     }
 
