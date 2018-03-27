@@ -42,9 +42,8 @@ private:
 
     template<typename... INDICES>
     inline void __checkbounds(size_t dim, int i, INDICES... indices) {
-        if (i < -_nhalo_l[dim] or i > _local_arr_size[dim] + _nhalo_r[dim] - 1) {
+        if !( is_inbounds(i, dim) )
             throw std::out_of_range("Out of range");
-        }
         __checkbounds(dim+1, indices...);
     }
 
@@ -109,6 +108,12 @@ public:
     // ITERATOR OVER THE IN-DOMAIN INDICES 
     inline IndexIterator<NDIMS> indices () {
         return IndexIterator<NDIMS>(_local_arr_size);
+    }
+
+    // ===================================================================== //
+    // check whether index i in in bounds along dimension dim
+    inline bool is_inbounds(int i, size_t dim) {
+        return (i < - _nhalo_left[dim] or i > _local_arr_size[dim] + _nhalo_right[dim] - 1);
     }
 
     // ===================================================================== //
