@@ -121,9 +121,21 @@ public:
         return _nelements;
     }
 
-    // ~~~ local array size ~~~
-    inline std::array<int, NDIMS> size(size_t dim) {
-        return _local_arr_size[dim];
+    // ~~~ local array size and halo dimension ~~~
+    inline std::array<int, NDIMS> size() { 
+        return _local_arr_size; 
+    }
+
+    inline int size(size_t dim) { 
+        return _local_arr_size[dim]; 
+    }
+
+    inline int nhalo(HaloTag tag, size_t dim) { 
+        switch (tag) {
+            case LEFT:   return _nhalo_left[dim];
+            case RIGHT:  return _nhalo_right[dim];
+            case CENTER: return _local_arr_size[dim];
+        }
     }
 
     // ===================================================================== //
