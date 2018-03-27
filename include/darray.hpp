@@ -64,7 +64,7 @@ public:
         : _array_size  (array_size ) 
         , _topology        (topo       ) {
             // define size of local array and number of left/right halo points
-            for (auto dim : LinearRange(0, NDIMS))
+            for (auto dim : LinRange(NDIMS))
                 _local_arr_size[dim] = _array_size[dim] / topo.grid_size_along_dim(dim);
                 _nhalo_left[dim] = topo.is_on_left_boundary(dim) || topo.is_periodic_along_dim(dim) ? 
                                     nhalo_out[dim] : nhalo_in;
@@ -120,7 +120,7 @@ public:
     // ~~~ size of memory buffer, including halo ~~~
     inline size_t nelements() const {
         size_t _nelements = 1;
-        for (auto dim : LinearRange(0, NDIMS))
+        for (auto dim : LinRange(NDIMS))
             _nelements *= _nhalo_left[dim] + _local_arr_size[dim] + _nhalo_right[dim];
         return _nelements;
     }
