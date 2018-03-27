@@ -64,22 +64,28 @@ public:
 
     // ===================================================================== //
     // QUERIES FOR POSITION ON THE PROCESSOR GRID
-    template<typename DIM>
-    inline bool is_on(LeftBoundary<DIM>) {
-        if (_is_periodic[DIM]) return false;
-        return _grid_coords[DIM] == 0;
-    }
-
-    template <typename DIM>
-    inline bool is_on(RightBoundary<DIM>) {
-        if (_is_periodic[DIM]) return false;
-        return _grid_coords[DIM] == _grid_size[DIM] - 1;
+    inline bool is_on_boundary(BoundaryTag tag, size_t dim) {
+        if (_is_periodic[dim]) return false;
+        switch(tag) {
+            case BoundaryTag::LEFT:
+                return _grid_coords[dim] == 0;
+            case BoundaryTag::RIGHT:
+                return _grid_coords[dim] == _grid_size[dim] - 1;
+        }
     }
 
     inline bool is_on_boundary() {
-        for (auto dim : DimRange<NDIMS>())
-            if (is_on(LeftBoundary<dim>()) || is_on(RightBoundary<dim>()))
+        for (auto dim : LinRange(NDIMS))
+            if (is_on(Boundary::RIGHT, dim) || is_on(Boundary::LEFT, dim))
                 return true;
+        return false;
+    }
+
+    inline bool has_halo_at(BoundaryRegion<NDIMS> region) {
+        for ( auto dim : LinRange(NDIMS) ) {
+            if ( is_on_boundary(region[dim], dim) )
+                return true;
+        }
         return false;
     }
 };
