@@ -123,10 +123,8 @@ public:
     // UTILITIES 
     // ~~~ size of memory buffer, including halo ~~~
     inline size_t nelements() const {
-        size_t _nelements = 1;
-        for (auto dim : LinRange(NDIMS))
-            _nelements *= _nhalo_left[dim] + _local_arr_size[dim] + _nhalo_right[dim];
-        return _nelements;
+        return std::reduce(_raw_arr_size.begin(), _raw_arr_size.end(), 
+                           1, std::multiplies<>());
     }
 
     // ~~~ local array size and halo dimension ~~~
