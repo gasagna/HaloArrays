@@ -136,33 +136,11 @@ public:
         return _local_arr_size[dim]; 
     }
 
-    inline int nhalo(HaloTag tag, size_t dim) { 
+    inline int nhalo(HaloRegionTag tag, size_t dim) { 
         switch (tag) {
-            case LEFT:   return _nhalo_left[dim];
-            case RIGHT:  return _nhalo_right[dim];
-            case CENTER: return _local_arr_size[dim];
-        }
-    }
-
-    // ===================================================================== //
-    // UPDATE HALO POINTS
-    template<typename T>
-    void DArray<T, NDIMS>::swap_halo() {
-        // get rank of adjacent processor on the cartesian grid
-        int adjacent_proc;
-    
-        // loop over the halo regions and send/recv 
-        for ( auto region : HaloRegions<NDIMS>() ) {
-            if ( !_topology.has_halo_at(region) ) {
-                adjacent_proc = _topology.neighbour_proc(region)
-                send(subarray(*this, region, HaloIntent::SEND)), 
-                     adjacent_proc, 
-                     message_tag(region));
-                recv(subarray(*this, region, HaloIntent::RECV)), 
-                     adjacent_proc, 
-                     message_tag(region));
-                }
-            }
+            case HaloRegionTag::LEFT   : return _nhalo_left[dim];
+            case HaloRegionTag::RIGHT  : return _nhalo_right[dim];
+            case HaloRegionTag::CENTER : return _local_arr_size[dim];
         }
     }
 
