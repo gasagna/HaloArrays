@@ -46,7 +46,7 @@ private:
 
     template<typename... INDICES>
     inline void __checkbounds(size_t dim, int i, INDICES... indices) {
-        if !( _is_inbounds(i, dim) )
+        if ( !_is_inbounds(i, dim) )
             throw std::out_of_range("Out of range");
         __checkbounds(dim+1, indices...);
     }
