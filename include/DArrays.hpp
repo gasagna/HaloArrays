@@ -1,8 +1,8 @@
 #include "iterators.hpp"
-// #include "topology.hpp"
-// #include "darray.hpp"
-// #include "haloswap.hpp"
-// #include "mpisession.hpp"
+#include "haloregion.hpp"
+#include "dlayout.hpp"
+#include "darray.hpp"
+#include "mpiwrapper.hpp"
 
 // DEFAULT CONFIGURATION OPTIONS
 #ifndef DARRAY_CONFIG_CHECKBOUNDS
