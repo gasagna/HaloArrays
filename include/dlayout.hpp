@@ -9,13 +9,13 @@
 // import iterator facilities
 using namespace DArrays::Iterators;
 
-namespace DArrays::Topology {
+namespace DArrays {
 
 // ===================================================================== //
 // DEFINES TOPOLOGY OF THE DISTRIBUTED ARRAY
 template <size_t NDIMS>
-class DArrayTopology {
-// variables
+class DArrayLayout {
+// VARIABLES
 private:
     std::map<HaloRegion<NDIMS>, int> _rank_of_neighbour_at_map; // ranks of neighbouring processors
     MPI_Comm                                             _comm; // communicator connecting all processor over which the array data is distributed
@@ -25,13 +25,14 @@ private:
     int                                             _comm_size; // the number of processors in the communicator
     int                                             _comm_rank; // rank of current processor within communicator
 
-// functions
+// FUNCTIONS
 private:
-    // construct the coordinates of the processor we need to talk to
-    // based on the halo region we are considering. The CENTER tag
-    // corresponds to a zero shift, hence it is not included. It is
-    // an error to call this function for a region where there is
-    // no neighbour. This is used at initialisation only.
+    // ===================================================================== //
+    // CONSTRUCT THE COORDINATES OF THE PROCESSOR WE NEED TO TALK TO
+    // BASED ON THE HALO REGION WE ARE CONSIDERING. THE CENTER TAG
+    // CORRESPONDS TO A ZERO SHIFT, HENCE IT IS NOT INCLUDED. IT IS
+    // AN ERROR TO CALL THIS FUNCTION FOR A REGION WHERE THERE IS
+    // NO NEIGHBOUR. THIS IS USED AT INITIALISATION ONLY.
     int _rank_of_neighbour_at(HaloRegion<NDIMS> region) {
         std::array<int, NDIMS> target_coords = _proc_grid_coords;
         int target_proc_rank;
@@ -50,7 +51,8 @@ private:
         return target_proc_rank;
     }
 
-    // helper function
+    // ===================================================================== //
+    // HELPER FUNCTION
     inline bool _has_neighbour_at(HaloRegionTag tag, size_t dim) {
         if (_is_periodic[dim]) return true;
         switch(tag) {
@@ -66,7 +68,7 @@ private:
 public:
     // ===================================================================== //
     // CONSTRUCTOR
-    DArrayTopology(MPI_Comm comm, 
+    DArrayLayout(MPI_Comm comm, 
                    std::array<int, NDIMS> proc_grid_size,
                    std::array<int, NDIMS> is_periodic) 
         : _proc_grid_size   (proc_grid_size  )
