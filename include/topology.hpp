@@ -63,43 +63,54 @@ public:
     }
 
     // ===================================================================== //
-    // QUERIES FOR POSITION ON THE PROCESSOR GRID
-    inline bool is_on_boundary(BoundaryTag tag, size_t dim) {
+    // QUERY WHETHER THE CURRENT PROCESSOR IS ON THE BOUNDARY OF THE PROCESSOR
+    // GRID. IF TRUE, THERE IS NO NEIGHBOURING PROCESSOR WE NEED TO SEND/RECV
+    // DATA TO/FROM.
+    inline bool has_grid_boundary_at(HaloRegion<NDIMS> region) {
+        for ( auto dim : LinRange(NDIMS) ) {
+            if ( _has_grid_boundary_at(region[dim], dim) )
+                return true;
+        }
+        return false;
+    }
+
+    // helper function
+    inline bool _has_grid_boundary_at(HaloRegionTag tag, size_t dim) {
         if (_is_periodic[dim]) return false;
         switch(tag) {
-            case BoundaryTag::LEFT:
-                return _grid_coords[dim] == 0;
-            case BoundaryTag::RIGHT:
-                return _grid_coords[dim] == _grid_size[dim] - 1;
+            case HaloRegionTag::LEFT:
+                return _proc_grid_coords[dim] == 0;
+            case HaloRegionTag::RIGHT:
+                return _proc_grid_coords[dim] == _proc_grid_size[dim] - 1;
+            case HaloRegionTag::CENTER:
+                return false;
         }
     }
-
-    inline bool is_on_boundary() {
-        for (auto dim : LinRange(NDIMS))
-            if (is_on(Boundary::RIGHT, dim) || is_on(Boundary::LEFT, dim))
-                return true;
-        return false;
-    }
-
-    inline bool has_halo_at(BoundaryRegion<NDIMS> region) {
-        for ( auto dim : LinRange(NDIMS) ) {
-            if ( is_on_boundary(region[dim], dim) )
-                return true;
-        }
-        return false;
-    }
-
+    
     // ===================================================================== //
     // GET RANK OF NEIGHBOURING PROCESSOR
-    int neighbour_proc(BoundaryTag tag, size_t dim) {
-        int this_proc, that_proc;
-        MPI_Cart_shift(_comm,       // communicator
-                       dim,         // dimension
-                       tag,         // displacement
-                       &this_proc,  // this process rank
-                       &that_proc); // rank of right process
-        return that_proc;
-        // TODO: understand what happens when there is no neighbour
+    // TODO: rather then recomputing this over and over, one could have a 
+    // hashmap that stores this information, avoiding recomputations
+    int neighbour_proc_rank(HaloRegion<NDIMS> region) {
+
+        // construct the coordinates of the processor we need to talk to
+        // based on the halo region we are considering. The CENTER tag
+        // corresponds to a zero shift, hence it is not included.         
+        std::array<int, NDIMS> target_coords = _proc_grid_coords;
+        int target_proc_rank;
+        for ( auto dim : LinRange(NDIMS) ) {
+            if (region[dim] == HaloRegionTag::LEFT)
+                target_coords[dim] -= 1;
+            if (region[dim] == HaloRegionTag::RIGHT)
+                target_coords[dim] += 1;
+        }
+
+        // call to the MPI function
+        MPI_Cart_rank(_comm,             
+                      target_coords.data(),     
+                      &target_proc_rank);
+
+        return target_proc_rank;
     }
 };
 
