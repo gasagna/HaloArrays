@@ -128,7 +128,7 @@ public:
     }
 
     // ~~~ local array size and halo dimension ~~~
-    inline std::array<int, NDIMS> size() { 
+    inline std::array<int, NDIMS>& size() const { 
         return _local_arr_size; 
     }
 
