@@ -3,30 +3,32 @@
 #include <iterator>
 #include <numeric>
 #include <array>
+#include <cmath>
 
 namespace DArrays::Iterators {
 
-////////////////////////////////////////////////////////
-// linear range, from FROM to TO, end points included //
-////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
+// Integer linear range, from FROM to TO, end point excluded. //
+// This has the same semantics of the python range function   //
+////////////////////////////////////////////////////////////////
 class LinRange {
 private:
     // range iterator
     class _LinRangeIter {
         private:
-            int      _state;
-            bool _isforward;
+            int _state;
+            int  _step;
         public:
-            _LinRangeIter (int state, bool isforward) 
-                : _state     (state    )
-                , _isforward (isforward) {} 
+            _LinRangeIter (int state, int step) 
+                : _state (state)
+                , _step  (step ) {} 
 
             inline int operator * () const { 
                 return _state; 
             }
 
             inline _LinRangeIter operator ++ () {
-                _isforward ? _state++ : _state--;
+                _state += _step;
                 return *this;
             }
 
@@ -36,12 +38,14 @@ private:
         };
     
     // range end points: included
-    int _from, _to;
+    int _from, _to, _step;
 public:
-    LinRange(int from, int to) 
-        : _from (from), _to (to) {}
-    _LinRangeIter begin() { return {_from, _from < _to}; }
-    _LinRangeIter   end() { return {_from < _to ? _to + 1 : _to - 1, _from < _to}; }
+    LinRange(int from, int to, int step) : _from (from), _to (to), _step (step) {}
+    LinRange(int from, int to)           : _from (from), _to (to), _step (1)    {}
+    LinRange(int to)                     : _from (0),    _to (to), _step (1)    {}
+    _LinRangeIter begin() { return {_from, _step}; }
+    _LinRangeIter   end() { return {static_cast<int>(_from + 
+                            _step*std::ceil((_to - _from )/(double)_step)), _step}; } 
 };
 
 
@@ -72,7 +76,7 @@ private:
         // ADD LINEARISED INDEX TO THE STATE
         inline void _addlinearindex(difference_type n) {
             div_t divrem;
-            for ( auto dim : LinRange(NDIMS-1, 0) ) {
+            for ( auto dim : LinRange(NDIMS-1, -1, -1) ) {
                 divrem = div(n, _size_prod[dim]);
                 _state[dim] += divrem.quot;
                 n = divrem.rem;
@@ -81,9 +85,9 @@ private:
 
         // ===================================================================== //
         // EXPAND STATE TO LINEARISED INDEX
-        inline difference_type _tolinearindex() {
+        inline difference_type _tolinearindex() const {
             difference_type n = 0;
-            for ( auto dim : LinRange(0, NDIMS-1) )
+            for ( auto dim : LinRange(NDIMS) )
                 n += _size_prod[dim] * _state[dim];
             return n;
         }
@@ -95,7 +99,7 @@ private:
             : _size       (size )  
             , _state      (state) {
                 _size_prod[0] = 1;
-                for (auto dim : LinRange(1, NDIMS-1)) {
+                for (auto dim : LinRange(1, NDIMS)) {
                     _size_prod[dim] = _size_prod[dim-1]*_size[dim];
                 }
                 // std::exclusive_scan(_size.begin(),
@@ -115,7 +119,7 @@ private:
             _state[0]++;
             // TODO: benchmark this compare to simpler loop. Is the
             // compiler able to unroll this efficiently?
-            for ( auto dim : LinRange(0, NDIMS-2) ) {
+            for ( auto dim : LinRange(NDIMS-1) ) {
                 if (_state[dim] == _size[dim]) {
                     _state[dim] = 0; 
                     _state[dim+1]++;
@@ -139,19 +143,19 @@ private:
 
         // ===================================================================== //
         // EQUALITY AND COMPARISON
-        inline bool operator == (_IndexRangeIter& other) const {
+        inline bool operator == (const _IndexRangeIter& other) const {
             return _state == other._state;
         }
 
-        inline bool operator != (_IndexRangeIter& other) const {
+        inline bool operator != (const _IndexRangeIter& other) const {
             return !(*this == other);
         }
 
-        inline bool operator < (_IndexRangeIter& other) const {
+        inline bool operator < (const _IndexRangeIter& other) const {
             return _tolinearindex() < other._tolinearindex();
         }
 
-        inline bool operator > (_IndexRangeIter& other) const {
+        inline bool operator > (const _IndexRangeIter& other) const {
             return _tolinearindex() > other._tolinearindex();
         }
     };
