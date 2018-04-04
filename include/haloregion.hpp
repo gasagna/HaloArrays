@@ -73,11 +73,13 @@ static const std::array<HaloRegion<3>, 26> _bnds_3d = {{{HaloRegionTag::LEFT,   
 
 
 // tuple to collect all bits together
-static const auto _halo_regions = std::make_tuple(0, _bnds_1d, _bnds_2d, _bnds3);
+static const auto _halo_regions = std::make_tuple(0, _bnds_1d, _bnds_2d, _bnds_3d);
 
 // ===================================================================== //
 // OBTAIN AN ARRAY OF HALO REGIONS TO ITERATE OVER
 template <size_t NDIMS>
 auto HaloRegions() -> decltype(std::get<NDIMS>(_halo_regions)) {
     return std::get<NDIMS>(_halo_regions);
+}
+
 }
