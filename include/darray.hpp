@@ -65,18 +65,21 @@ public:
     // CONSTRUCTOR/DESTRUCTOR
     DArray() = delete;
 
-    DArray(Topo::DArrayTopology<NDIMS> topo, 
+    DArray(DArrayLayout<NDIMS> layout, 
            std::array<int, NDIMS> array_size,
            std::array<int, NDIMS> nhalo_out, int nhalo_in)
-        : _array_size  (array_size ) 
-        , _topology        (topo       ) {
+        : _array_size (array_size ) 
+        , _layout     (layout     ) {
             // define size of local array and number of left/right halo points
-            for (auto dim : LinRange(NDIMS))
-                _local_arr_size[dim] = _array_size[dim] / topo.grid_size_along_dim(dim);
-                _nhalo_left[dim] = topo.is_on_left_boundary(dim) || topo.is_periodic_along_dim(dim) ? 
+            for (auto dim : LinRange(NDIMS)) {
+                _local_arr_size[dim] = _array_size[dim] / layout.grid_size(dim);
+                _nhalo_left[dim]  = layout.has_neighbour_at(HaloRegionTag::LEFT, dim)  || layout.is_periodic(dim) ? 
                                     nhalo_out[dim] : nhalo_in;
-                _nhalo_right[dim] = topo.is_on_right_boundary(dim) || topo.is_periodic_along_dim(dim) ? 
+                _nhalo_right[dim] = layout.has_neighbour_at(HaloRegionTag::RIGHT, dim) || layout.is_periodic(dim) ? 
                                     nhalo_out[dim] : nhalo_in;
+
+                // full size of the data
+                _raw_arr_size[dim] = _local_arr_size[dim] + _nhalo_left[dim] + _nhalo_right[dim];
             }
 
             // allocate memory buffer
