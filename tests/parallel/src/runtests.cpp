@@ -4,8 +4,8 @@
 
 
 int main(int argc, char* argv[]) {
-    DArrays::MPISession::Initialize();
+    DArrays::MPI::Initialize();
     const int result = Catch::Session().run(argc, argv);
-    DArrays::MPISession::Finalize();
+    DArrays::MPI::Finalize();
     return result;
 }
