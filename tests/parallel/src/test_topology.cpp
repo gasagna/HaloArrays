@@ -17,34 +17,34 @@ TEST_CASE("1D tests", "[1D-tests]") {
     //  26 |  0  1  ... 26 |  0
 
     // array of processors to be tested
-    std::array<int,                3> procs    = {0,  10, 26}; 
+    std::array<int,                3> procs    = {0, 10, 26}; 
     // this follows the order defined in haloregion.hpp                     
     std::array<std::array<int, 2>, 3> expected = {{{26,  1},   //  0
                                                    { 9, 11},   // 10
                                                    {25,  0}}}; // 26
 
     for (auto periodic1 : {true, false}) {
-        SECTION("is_periodic = xxx") {
-            std::array<int, 1>  is_periodic = {periodic1};
-            DArrays::Topology::DArrayTopology<1> topo(MPI_COMM_WORLD, 
-                                                      proc_grid_size,
-                                                      is_periodic);
-            // for every processors we want to check
-            for (auto j : LinRange(procs.size())) {
-                // if it is actually the processor we want to check
-                if (topo._comm_rank == procs[j]) {
-                    // for every neighbour
-                    for (auto i : LinRange(regions.size())) {
-                        // we only check if there is a neighbour, otherwise it should throw
-                        if ( !topo.has_grid_boundary_at(regions[i]) ) {
-                            REQUIRE( topo.neighbour_proc_rank(regions[i]) == expected[j][i] );
-                        } else {
-                            REQUIRE_THROWS( topo.neighbour_proc_rank(regions[i]) );
-                        }
+        std::array<int, 1>  is_periodic = {periodic1};
+        DArrays::Topology::DArrayTopology<1> topo(MPI_COMM_WORLD, 
+                                                    proc_grid_size,
+                                                    is_periodic);
+
+        // for every processors we want to check
+        for (auto j : LinRange(procs.size())) {
+            // if it is actually the processor we want to check
+            if (topo.rank() == procs[j]) {
+                // for every neighbour
+                for (auto i : LinRange(regions.size())) {
+                    // we only check if there is a neighbour, otherwise it should throw
+                    if ( topo.has_neighbour_at(regions[i]) ) {
+                        REQUIRE( topo.rank_of_neighbour_at(regions[i]) == expected[j][i] );
+                    } else {
+                        REQUIRE_THROWS( topo.rank_of_neighbour_at(regions[i]) );
                     }
                 }
             }
-        }
+        }                                                      
+        // for every neighbour
     }
 }
 
@@ -82,24 +82,22 @@ TEST_CASE("2D tests", "[2D-tests]") {
 
     for (auto periodic1 : {true, false}) {
         for (auto periodic2 : {true, false}) {
-            SECTION("is_periodic = xxx ") {
-                std::array<int, 2> is_periodic = {periodic1, periodic2};
-                DArrays::Topology::DArrayTopology<2> topo(MPI_COMM_WORLD, 
-                                                          proc_grid_size,
-                                                          is_periodic);
+            std::array<int, 2> is_periodic = {periodic1, periodic2};
+            DArrays::Topology::DArrayTopology<2> topo(MPI_COMM_WORLD, 
+                                                        proc_grid_size,
+                                                        is_periodic);
 
-                // for every processors we want to check
-                for (auto j : LinRange(procs.size())) {
-                    // if it is actually the processor we want to check
-                    if (topo._comm_rank == procs[j]) {
-                        // for every neighbour
-                        for (auto i : LinRange(regions.size())) {
-                            // we only check if there is a neighbour, otherwise it should throw
-                            if ( !topo.has_grid_boundary_at(regions[i]) ) {
-                                REQUIRE( topo.neighbour_proc_rank(regions[i]) == expected[j][i] );
-                            } else {
-                                REQUIRE_THROWS( topo.neighbour_proc_rank(regions[i]) );
-                            }
+            // for every processors we want to check
+            for (auto j : LinRange(procs.size())) {
+                // if it is actually the processor we want to check
+                if (topo.rank() == procs[j]) {
+                    // for every neighbour
+                    for (auto i : LinRange(regions.size())) {
+                        // we only check if there is a neighbour, otherwise it should throw
+                        if ( topo.has_neighbour_at(regions[i]) ) {
+                            REQUIRE( topo.rank_of_neighbour_at(regions[i]) == expected[j][i] );
+                        } else {
+                            REQUIRE_THROWS( topo.rank_of_neighbour_at(regions[i]) );
                         }
                     }
                 }
@@ -137,24 +135,22 @@ TEST_CASE("3D tests", "[3D-tests]") {
     for (auto periodic1 : {true, false}) {
         for (auto periodic2 : {true, false}) {
             for (auto periodic3 : {true, false}) {
-                SECTION("is_periodic = xxx ") {
-                    std::array<int, 3> is_periodic = {periodic1, periodic2, periodic3};
-                    DArrays::Topology::DArrayTopology<3> topo(MPI_COMM_WORLD, 
-                                                              proc_grid_size,
-                                                              is_periodic);
+                std::array<int, 3> is_periodic = {periodic1, periodic2, periodic3};
+                DArrays::Topology::DArrayTopology<3> topo(MPI_COMM_WORLD, 
+                                                            proc_grid_size,
+                                                            is_periodic);
 
-                    // for every processors we want to check
-                    for (auto j : LinRange(procs.size())) {
-                        // if it is actually the processor we want to check
-                        if (topo._comm_rank == procs[j]) {
-                            // for every neighbour
-                            for (auto i : LinRange(regions.size())) {
-                                // we only check if there is a neighbour, otherwise it should throw
-                                if ( !topo.has_grid_boundary_at(regions[i]) ) {
-                                    REQUIRE( topo.neighbour_proc_rank(regions[i]) == expected[j][i] );
-                                } else {
-                                    REQUIRE_THROWS( topo.neighbour_proc_rank(regions[i]) );
-                                }
+                // for every processors we want to check
+                for (auto j : LinRange(procs.size())) {
+                    // if it is actually the processor we want to check
+                    if (topo.rank() == procs[j]) {
+                        // for every neighbour
+                        for (auto i : LinRange(regions.size())) {
+                            // we only check if there is a neighbour, otherwise it should throw
+                            if ( topo.has_neighbour_at(regions[i]) ) {
+                                REQUIRE( topo.rank_of_neighbour_at(regions[i]) == expected[j][i] );
+                            } else {
+                                REQUIRE_THROWS( topo.rank_of_neighbour_at(regions[i]) );
                             }
                         }
                     }
