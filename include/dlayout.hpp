@@ -65,6 +65,13 @@ private:
         }
     }
 
+    // ===================================================================== //
+    // CHECK WHETHER WE ARE NOT GETTING OUT OF BOUNDS WITH THE DIMENSION
+    void _checkboundsdim(size_t dim) {
+        if ( dim < 0 or dims >= NDIMS )
+            throw std::out_of_range("dimension out of range");
+    }
+
 public:
     // ===================================================================== //
     // CONSTRUCTOR
@@ -97,6 +104,24 @@ public:
                 _rank_of_neighbour_at_map[region] = _rank_of_neighbour_at(region);
             }
         }
+    }
+
+    // ===================================================================== //
+    // GET PROCESSOR GRID SIZE ALONG DIMENSION DIM
+    inline int grid_size(size_t dim) const {
+        #if DARRAY_CONFIG_CHECKBOUNDS
+            _checkboundsdim(dim);
+        #endif
+        return _grid_size[dim];        
+    }
+
+    // ===================================================================== //
+    // GET WHETHER ARRAY IS PERIODIC ALONG DIMENSION DIM
+    inline bool is_periodic(size_t dim) const {
+        #if DARRAY_CONFIG_CHECKBOUNDS
+            _checkboundsdim(dim);
+        #endif
+        return _is_periodic[dim];
     }
 
     // ===================================================================== //
