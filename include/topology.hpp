@@ -4,7 +4,8 @@
 #include <functional>
 #include <mpi.h>
 
-
+// import iterator facilities
+using namespace DArrays::Iterators;
 
 namespace DArrays::Topology {
 
