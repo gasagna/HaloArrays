@@ -132,6 +132,10 @@ public:
         return _local_arr_size; 
     }
 
+    inline std::array<int, NDIMS>& raw_size() const { 
+        return _raw_arr_size; 
+    }
+
     inline int size(size_t dim) { 
         return _local_arr_size[dim]; 
     }
