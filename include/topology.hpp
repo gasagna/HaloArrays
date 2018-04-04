@@ -4,9 +4,9 @@
 #include <functional>
 #include <mpi.h>
 
-namespace DArrays::Topo {
 
 
+namespace DArrays::Topology {
 
 // ===================================================================== //
 // DEFINES TOPOLOGY OF THE DISTRIBUTED ARRAY
