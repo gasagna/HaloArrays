@@ -1,7 +1,6 @@
 #pragma once
 #include <array>
-#include <numeric>
-#include <initializer_list>
+#include <tuple>
 
 ////////////////////////////////////////////////////////
 //                     HALO REGION                    //
