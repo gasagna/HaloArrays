@@ -64,6 +64,8 @@ private:
     }
 
 public:
+    // ===================================================================== //
+    // CONSTRUCTOR
     DArrayTopology(MPI_Comm comm, 
                    std::array<int, NDIMS> proc_grid_size,
                    std::array<int, NDIMS> is_periodic) 
@@ -108,8 +110,7 @@ public:
     }
 
     // ===================================================================== //
-    // QUERY WHETHER THIS PROCESSOR HAS A NEIGHBOURING PROCESSOR SHARING
-    // A GIVEN HALO REGION. IF TRUE, WE NEED TO SEND/RECV  DATA TO/FROM.
+    // WHETHER THIS PROCESSOR HAS A NEIGHBOUR SHARING A GIVEN HALO REGION
     inline bool has_neighbour_at(HaloRegion<NDIMS> region) {
         for ( auto dim : LinRange(NDIMS) ) {
             if ( !_has_neighbour_at(region[dim], dim) )
