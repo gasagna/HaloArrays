@@ -7,14 +7,15 @@ namespace DArrays {
 template <typename T, size_t NDIMS>
 class DArray {
 private:
+// VARIABLES
     std::array<int, NDIMS> _local_arr_size; // local array size
     std::array<int, NDIMS>   _raw_arr_size; // local array size, including halo points
     std::array<int, NDIMS>    _nhalo_right; // number of halo points on 'right' side (high index)
     std::array<int, NDIMS>     _array_size; // global array size
     std::array<int, NDIMS>     _nhalo_left; // number of halo points on 'left'  side (low index)
-    DArrayLayout<NDIMS>            _layout; // topologically-aware communicator object
     T*                               _data; // actual data
 
+// FUNCTIONS
     // ===================================================================== //
     // INDEXING INTO LINEAR MEMORY BUFFER
     template<typename... INDICES>
@@ -55,7 +56,10 @@ private:
     }
 
 public:
+// VARIABLES
+    DArrayLayout<NDIMS>            layout; // topologically-aware communicator object
 
+// FUNCTIONS
     // ===================================================================== //
     // CONTAINER INTERFACE
     using value_type     = T;
@@ -69,7 +73,7 @@ public:
            std::array<int, NDIMS> array_size,
            std::array<int, NDIMS> nhalo_out, int nhalo_in)
         : _array_size (array_size ) 
-        , _layout     (layout     ) {
+        , layout      (layout     ) {
             // define size of local array and number of left/right halo points
             for (auto dim : LinRange(NDIMS)) {
                 _local_arr_size[dim] = _array_size[dim] / layout.grid_size(dim);
