@@ -8,7 +8,7 @@ TEST_CASE("1D tests", "[1D-tests]") {
     // use this grid size for tests
     std::array<int, 1> proc_grid_size = {27};
 
-    // get halo regions for 1d topology
+    // get halo regions for 1d layoutlogy
     auto regions = DArrays::HaloRegions<1>();
 
     // check numeric value for a few processors at key locations
@@ -25,21 +25,21 @@ TEST_CASE("1D tests", "[1D-tests]") {
 
     for (auto periodic1 : {true, false}) {
         std::array<int, 1>  is_periodic = {periodic1};
-        DArrays::Topology::DArrayTopology<1> topo(MPI_COMM_WORLD, 
-                                                    proc_grid_size,
-                                                    is_periodic);
+        DArrays::DArrayLayout<1> layout(MPI_COMM_WORLD, 
+                                        proc_grid_size,
+                                        is_periodic);
 
         // for every processors we want to check
         for (auto j : LinRange(procs.size())) {
             // if it is actually the processor we want to check
-            if (topo.rank() == procs[j]) {
+            if (layout.rank() == procs[j]) {
                 // for every neighbour
                 for (auto i : LinRange(regions.size())) {
                     // we only check if there is a neighbour, otherwise it should throw
-                    if ( topo.has_neighbour_at(regions[i]) ) {
-                        REQUIRE( topo.rank_of_neighbour_at(regions[i]) == expected[j][i] );
+                    if ( layout.has_neighbour_at(regions[i]) ) {
+                        REQUIRE( layout.rank_of_neighbour_at(regions[i]) == expected[j][i] );
                     } else {
-                        REQUIRE_THROWS( topo.rank_of_neighbour_at(regions[i]) );
+                        REQUIRE_THROWS( layout.rank_of_neighbour_at(regions[i]) );
                     }
                 }
             }
@@ -53,7 +53,7 @@ TEST_CASE("2D tests", "[2D-tests]") {
     // use this grid size for tests
     std::array<int, 2> proc_grid_size = {3, 9};
 
-    // get halo regions for 2d topology
+    // get halo regions for 2d layoutlogy
     auto regions = DArrays::HaloRegions<2>();
 
     // check numeric value for a few processors at key locations
@@ -83,21 +83,21 @@ TEST_CASE("2D tests", "[2D-tests]") {
     for (auto periodic1 : {true, false}) {
         for (auto periodic2 : {true, false}) {
             std::array<int, 2> is_periodic = {periodic1, periodic2};
-            DArrays::Topology::DArrayTopology<2> topo(MPI_COMM_WORLD, 
-                                                        proc_grid_size,
-                                                        is_periodic);
+            DArrays::DArrayLayout<2> layout(MPI_COMM_WORLD, 
+                                            proc_grid_size,
+                                            is_periodic);
 
             // for every processors we want to check
             for (auto j : LinRange(procs.size())) {
                 // if it is actually the processor we want to check
-                if (topo.rank() == procs[j]) {
+                if (layout.rank() == procs[j]) {
                     // for every neighbour
                     for (auto i : LinRange(regions.size())) {
                         // we only check if there is a neighbour, otherwise it should throw
-                        if ( topo.has_neighbour_at(regions[i]) ) {
-                            REQUIRE( topo.rank_of_neighbour_at(regions[i]) == expected[j][i] );
+                        if ( layout.has_neighbour_at(regions[i]) ) {
+                            REQUIRE( layout.rank_of_neighbour_at(regions[i]) == expected[j][i] );
                         } else {
-                            REQUIRE_THROWS( topo.rank_of_neighbour_at(regions[i]) );
+                            REQUIRE_THROWS( layout.rank_of_neighbour_at(regions[i]) );
                         }
                     }
                 }
@@ -111,7 +111,7 @@ TEST_CASE("3D tests", "[3D-tests]") {
     // use this grid size for tests
     std::array<int, 3> proc_grid_size = {3, 3, 3};
 
-    // get halo regions for 3d topology
+    // get halo regions for 3d layoutlogy
     auto regions = DArrays::HaloRegions<3>();
 
     // check numeric value for a few processors at key locations
@@ -136,21 +136,21 @@ TEST_CASE("3D tests", "[3D-tests]") {
         for (auto periodic2 : {true, false}) {
             for (auto periodic3 : {true, false}) {
                 std::array<int, 3> is_periodic = {periodic1, periodic2, periodic3};
-                DArrays::Topology::DArrayTopology<3> topo(MPI_COMM_WORLD, 
-                                                            proc_grid_size,
-                                                            is_periodic);
+                DArrays::DArrayLayout<3> layout(MPI_COMM_WORLD, 
+                                                proc_grid_size,
+                                                is_periodic);
 
                 // for every processors we want to check
                 for (auto j : LinRange(procs.size())) {
                     // if it is actually the processor we want to check
-                    if (topo.rank() == procs[j]) {
+                    if (layout.rank() == procs[j]) {
                         // for every neighbour
                         for (auto i : LinRange(regions.size())) {
                             // we only check if there is a neighbour, otherwise it should throw
-                            if ( topo.has_neighbour_at(regions[i]) ) {
-                                REQUIRE( topo.rank_of_neighbour_at(regions[i]) == expected[j][i] );
+                            if ( layout.has_neighbour_at(regions[i]) ) {
+                                REQUIRE( layout.rank_of_neighbour_at(regions[i]) == expected[j][i] );
                             } else {
-                                REQUIRE_THROWS( topo.rank_of_neighbour_at(regions[i]) );
+                                REQUIRE_THROWS( layout.rank_of_neighbour_at(regions[i]) );
                             }
                         }
                     }
