@@ -14,18 +14,26 @@ namespace DArrays::Topology {
 template <size_t NDIMS>
 class DArrayTopology {
 private:
-    MPI_Comm                       _comm; // communicator
-    int                       _comm_size; // size of communicator
-    int                       _comm_rank; // my rank within communicator
-    std::array<int, NDIMS>    _grid_size; // processor grid size
-    std::array<int, NDIMS>  _grid_coords; // processor grid coordinates
-    std::array<int, NDIMS>  _is_periodic; // global array size
+    // communicator connecting all processor over which the array data is distributed
+    MPI_Comm                            _comm;
+    // the number of processors in the communicator
+    int                            _comm_size;
+    // rank of current processor within communicator
+public:
+    int                            _comm_rank;
+private:
+    // the size of the processor grid over which data is distributed
+    std::array<int, NDIMS>    _proc_grid_size;
+    // coordinates of current processor in the grid
+    std::array<int, NDIMS>  _proc_grid_coords;
+    // whether the processor grid should wrap around
+    std::array<int, NDIMS>       _is_periodic;
 
 public:
     DArrayTopology(MPI_Comm comm, 
                    std::array<int, NDIMS> grid_size,
                    std::array<int, NDIMS> is_periodic) 
-        : _grid_size   (grid_size )
+        : _proc_grid_size   (grid_size )
         , _is_periodic (is_periodic) {
 
         // get communicator size and my rank
@@ -39,11 +47,10 @@ public:
             throw std::invalid_argument("incompatible processor count and processor grid size");
 
         // create communicator with cartesian topology
-        MPI_Cart_create(comm, NDIMS, _grid_size.data(),
+        MPI_Cart_create(comm, NDIMS, _proc_grid_size.data(),
                         _is_periodic.data(), false, &_comm);
 
         // get cartesian coordinates of my rank
-        MPI_Cart_coords(_comm, _comm_rank, NDIMS, _grid_coords.data());
     }
 
     // ===================================================================== //
@@ -56,6 +63,7 @@ public:
     // ~~~ get whether array is periodic along dimension dim ~~~
     inline bool is_periodic_along_dim(size_t dim) const {
         return _is_periodic[dim];
+        MPI_Cart_coords(_comm, _comm_rank, NDIMS, _proc_grid_coords.data());
     }
 
     // ~~~ handle to communicator ~~~
