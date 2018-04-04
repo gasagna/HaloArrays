@@ -73,23 +73,21 @@ private:
         std::array<int, NDIMS> _size_prod; // product of sizes // e.g. {1, 2, 6}
 
         // ===================================================================== //
-        // ADD LINEARISED INDEX TO THE STATE
-        inline void _addlinearindex(difference_type n) {
-            div_t divrem;
-            for ( auto dim : LinRange(NDIMS-1, -1, -1) ) {
-                divrem = div(n, _size_prod[dim]);
-                _state[dim] += divrem.quot;
-                n = divrem.rem;
-            }
-        }
-
-        // ===================================================================== //
-        // EXPAND STATE TO LINEARISED INDEX
+        // EXPAND STATE TO/FROM LINEARISED INDEX
         inline difference_type _tolinearindex() const {
             difference_type n = 0;
             for ( auto dim : LinRange(NDIMS) )
                 n += _size_prod[dim] * _state[dim];
             return n;
+        }
+
+        inline void _fromlinearindex(difference_type n) {
+            div_t divrem;            
+            for ( auto dim : LinRange(NDIMS-1, -1, -1) ) {
+                divrem = div(n, _size_prod[dim]);
+                _state[dim] = divrem.quot;
+                n = divrem.rem;
+            }
         }
 
     public:
@@ -98,13 +96,11 @@ private:
         _IndexRangeIter(std::array<int, NDIMS> size, std::array<int, NDIMS> state)
             : _size       (size )  
             , _state      (state) {
+                // compute product of array sizes
                 _size_prod[0] = 1;
                 for (auto dim : LinRange(1, NDIMS)) {
-                    _size_prod[dim] = _size_prod[dim-1]*_size[dim];
+                    _size_prod[dim] = _size_prod[dim-1]*_size[dim-1];
                 }
-                // std::exclusive_scan(_size.begin(),
-                                    // _size.end(),
-                                    // _size_prod.begin(), 1, std::multiplies<int>());
             }
 
         // ===================================================================== //
@@ -133,12 +129,13 @@ private:
         // ===================================================================== //
         // ADD/REMOVE LINEAR INDEX
         inline _IndexRangeIter& operator += (difference_type n) {
-            _addlinearindex(n);
+            _fromlinearindex(_tolinearindex() + n);
             return *this;
         }
 
         inline _IndexRangeIter& operator -= (difference_type n) {
-            return *this += -n;
+            _fromlinearindex(_tolinearindex() - n);
+            return *this;
         }
 
         // ===================================================================== //
@@ -167,7 +164,7 @@ public:
     template <typename... NS,
             typename ENABLER = std::enable_if_t< (... && std::is_integral_v<NS>) >>
     IndexRange(NS... ns) {
-        static_assert(sizeof...(ns) == NDIMS, "invalid iterator specification");
+        static_assert(sizeof...(ns) == NDIMS, "too many indiced for iterator dimension");
         _size = {ns...};
     }
 

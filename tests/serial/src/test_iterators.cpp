@@ -82,7 +82,7 @@ TEST_CASE("Testing index range", "[IndexRange]") {
     int i = 0;
     
     SECTION("values") {
-        SECTION("case 1 - array") {
+        SECTION("case 1d - array") {
             std::array<std::array<int, 1>, 5> exact = {{{0}, {1}, {2}, {3}, {4}}};
             std::array<int, 1> size = {5};
             for (auto val : DArrays::Iterators::IndexRange<1>(size)) {
@@ -91,7 +91,7 @@ TEST_CASE("Testing index range", "[IndexRange]") {
             REQUIRE(i == 5);
         }
 
-        SECTION("case 1 - integers") {
+        SECTION("case 1d - integers") {
             std::array<std::array<int, 1>, 5> exact = {{{0}, {1}, {2}, {3}, {4}}};
             for (auto val : DArrays::Iterators::IndexRange<1>(5)) {
                 REQUIRE(val == exact[i++]);
@@ -99,16 +99,29 @@ TEST_CASE("Testing index range", "[IndexRange]") {
             REQUIRE(i == 5);
         }
 
-        SECTION("case 2 - array") {
-            std::array<std::array<int, 2>, 6> exact = {{{0, 0}, {1, 0}, {0, 1}, {1, 1}, {0, 2}, {1, 2}}};
-            std::array<int, 2> size = {2, 3};
-            for (auto val : DArrays::Iterators::IndexRange<2>(size)) {
-                REQUIRE(val == exact[i++]);
+        SECTION("case 2d - array") {
+            SECTION("test 1") {           
+                std::array<std::array<int, 2>, 6> exact = {{{0, 0}, {1, 0}, {0, 1}, {1, 1}, {0, 2}, {1, 2}}};
+                std::array<int, 2> size = {2, 3};
+                for (auto val : DArrays::Iterators::IndexRange<2>(size)) {
+                    REQUIRE(val == exact[i++]);
+                }
+                REQUIRE(i == 6);
             }
-            REQUIRE(i == 6);
+
+            SECTION("test 2") {           
+                auto b = DArrays::Iterators::IndexRange<2>(3, 4).begin();
+                for (int j = 0; j < 4; j++) {
+                    for (int i = 0; i < 3; i++) {
+                        REQUIRE( (*b)[0] == i );
+                        REQUIRE( (*b)[1] == j );
+                        b += 1;
+                    }
+                }
+            }
         }
 
-        SECTION("case 2 - integers") {
+        SECTION("case 2d - integers") {
             std::array<std::array<int, 2>, 6> exact = {{{0, 0}, {1, 0}, {0, 1}, {1, 1}, {0, 2}, {1, 2}}};
             for (auto val : DArrays::Iterators::IndexRange<2>(2, 3)) {
                 REQUIRE(val == exact[i++]);
@@ -116,22 +129,38 @@ TEST_CASE("Testing index range", "[IndexRange]") {
             REQUIRE(i == 6);
         }
 
-        SECTION("case 3 - array") {
-            std::array<std::array<int, 3>, 18> exact = {{{0, 0, 0}, {1, 0, 0}, {2, 0, 0},
-                                                        {0, 1, 0}, {1, 1, 0}, {2, 1, 0}, 
-                                                        {0, 2, 0}, {1, 2, 0}, {2, 2, 0}, 
-                                                        {0, 0, 1}, {1, 0, 1}, {2, 0, 1},
-                                                        {0, 1, 1}, {1, 1, 1}, {2, 1, 1}, 
-                                                        {0, 2, 1}, {1, 2, 1}, {2, 2, 1}}};
-            for (auto val : DArrays::Iterators::IndexRange<3>(3, 3, 2)) {
-                REQUIRE(val == exact[i++]);
+        SECTION("case 3d - array") {
+            SECTION("test 1") {               
+                std::array<std::array<int, 3>, 18> exact = {{{0, 0, 0}, {1, 0, 0}, {2, 0, 0},
+                                                             {0, 1, 0}, {1, 1, 0}, {2, 1, 0}, 
+                                                             {0, 2, 0}, {1, 2, 0}, {2, 2, 0}, 
+                                                             {0, 0, 1}, {1, 0, 1}, {2, 0, 1},
+                                                             {0, 1, 1}, {1, 1, 1}, {2, 1, 1}, 
+                                                             {0, 2, 1}, {1, 2, 1}, {2, 2, 1}}};
+                for (auto val : DArrays::Iterators::IndexRange<3>(3, 3, 2)) {
+                    REQUIRE(val == exact[i++]);
+                }
+                REQUIRE(i == 18);
             }
-            REQUIRE(i == 18);
+
+            SECTION("test 2") {           
+                auto b = DArrays::Iterators::IndexRange<3>(3, 4, 5).begin();
+                for (int k = 0; k < 5; k++) {
+                    for (int j = 0; j < 4; j++) {
+                        for (int i = 0; i < 3; i++) {
+                            REQUIRE( (*b)[0] == i );
+                            REQUIRE( (*b)[1] == j );
+                            REQUIRE( (*b)[2] == k );
+                            b += 1;
+                        }
+                    }
+                }
+            }
         }
     }
 
     SECTION("random access iterator interface") {
-        DArrays::Iterators::IndexRange<3> rng(3, 3, 3);
+        DArrays::Iterators::IndexRange<3> rng(3, 4, 5);
         auto b = rng.begin();
 
         SECTION("in place addition/subtraction") {
@@ -148,14 +177,14 @@ TEST_CASE("Testing index range", "[IndexRange]") {
             }
 
             SECTION("case - 3") {
-                b += 9;
+                b += 12;
                 std::array<int, 3> expected = {0, 0, 1};
                 REQUIRE( *b == expected );
             }
             
             SECTION("case - 4") {
                 b += 15;
-                std::array<int, 3> expected = {0, 2, 1};
+                std::array<int, 3> expected = {0, 1, 1};
                 REQUIRE( *b == expected );
             }
 
@@ -163,6 +192,35 @@ TEST_CASE("Testing index range", "[IndexRange]") {
                 b += 3;
                 b -= 3;
                 std::array<int, 3> expected = {0, 0, 0};
+                REQUIRE( *b == expected );
+            }
+
+            SECTION("case - 6") {
+                b += 1;
+                b += 1;
+                b += 1;
+                b += 1;
+                std::array<int, 3> expected = {1, 1, 0};
+                REQUIRE( *b == expected );
+            }
+            
+            SECTION("case - 7") {
+                b += 2;
+                b += 2;
+                b += 2;
+                b += 2;
+                b += 2;
+                std::array<int, 3> expected = {1, 3, 0};
+                REQUIRE( *b == expected );
+            }
+            
+            SECTION("case - 8") {
+                b += 12;
+                std::array<int, 3> expected = {0, 0, 1};
+                REQUIRE( *b == expected );
+
+                b += 12;
+                expected = {0, 0, 2};
                 REQUIRE( *b == expected );
             }
         }
