@@ -7,12 +7,13 @@ namespace DArrays {
 template <typename T, size_t NDIMS>
 class DArray {
 private:
-    T*                                      _data; // actual data
-    Topo::DArrayTopology<NDIMS>         _topology; // topologically-aware communicator object
-    std::array<int, NDIMS>            _array_size; // global array size
-    std::array<int, NDIMS>        _local_arr_size; // local array size
-    std::array<int, NDIMS>               _nhalo_left; // number of halo points on 'left'  side (low index)
-    std::array<int, NDIMS>               _nhalo_right; // number of halo points on 'right' side (high index)
+    std::array<int, NDIMS> _local_arr_size; // local array size
+    std::array<int, NDIMS>   _raw_arr_size; // local array size, including halo points
+    std::array<int, NDIMS>    _nhalo_right; // number of halo points on 'right' side (high index)
+    std::array<int, NDIMS>     _array_size; // global array size
+    std::array<int, NDIMS>     _nhalo_left; // number of halo points on 'left'  side (low index)
+    DArrayLayout<NDIMS>            _layout; // topologically-aware communicator object
+    T*                               _data; // actual data
 
     // ===================================================================== //
     // INDEXING INTO LINEAR MEMORY BUFFER
