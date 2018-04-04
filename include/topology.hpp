@@ -17,12 +17,12 @@ template <size_t NDIMS>
 class DArrayTopology {
 // variables
 private:
-    MPI_Comm                                             _comm; // communicator connecting all processor over which the array data is distributed
-    int                                             _comm_size; // the number of processors in the communicator
-    std::array<int, NDIMS>                     _proc_grid_size; // the size of the processor grid over which data is distributed
-    std::array<int, NDIMS>                   _proc_grid_coords; // coordinates of current processor in the grid
-    std::array<int, NDIMS>                        _is_periodic; // whether the processor grid should wrap around
     std::map<HaloRegion<NDIMS>, int> _rank_of_neighbour_at_map; // ranks of neighbouring processors
+    MPI_Comm                                             _comm; // communicator connecting all processor over which the array data is distributed
+    std::array<int, NDIMS>                   _proc_grid_coords; // coordinates of current processor in the grid
+    std::array<int, NDIMS>                     _proc_grid_size; // the size of the processor grid over which data is distributed
+    std::array<int, NDIMS>                        _is_periodic; // whether the processor grid should wrap around
+    int                                             _comm_size; // the number of processors in the communicator
     int                                             _comm_rank; // rank of current processor within communicator
 
 // functions
