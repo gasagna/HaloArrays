@@ -4,6 +4,8 @@
 
 namespace DArrays {
 
+using namespace DArrays::Iterators;
+
 template <typename T, size_t NDIMS>
 class DArray {
 private:
@@ -119,8 +121,8 @@ public:
 
     // ===================================================================== //
     // ITERATOR OVER THE IN-DOMAIN INDICES 
-    inline IndexIterator<NDIMS> indices () {
-        return IndexIterator<NDIMS>(_local_arr_size);
+    inline IndexRange<NDIMS> indices () {
+        return IndexRange<NDIMS>(_local_arr_size);
     }
 
     // ===================================================================== //
