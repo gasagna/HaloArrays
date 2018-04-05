@@ -1,5 +1,5 @@
 #include "iterators.hpp"
-#include "haloregion.hpp"
+#include "boundaries.hpp"
 #include "dlayout.hpp"
 #include "darray.hpp"
 #include "mpiwrapper.hpp"
