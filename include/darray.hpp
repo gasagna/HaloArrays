@@ -144,5 +144,19 @@ public:
         return std::reduce(_raw_arr_size.begin(), _raw_arr_size.end(), 
                            1, std::multiplies<>());
     }
+
+    // ===================================================================== //
+    // UPDATE HALO POINTS
+    void swap_halo() {
+        // loop over the boundary regions and send/recv 
+        for ( auto boundary : AllBoundaries<NDIMS>() ) {
+            if ( layout.has_neighbour_at(boundary) ) {
+                sendrecv(subarray(*this, boundary, BoundaryIntent::SEND), 
+                         subarray(*this, boundary, BoundaryIntent::RECV),
+                         layout.rank(), layout.rank_of_neighbour_at(boundary),
+                         message_tag(boundary));
+            }
+        }
+    }       
 };
 }
