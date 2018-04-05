@@ -54,18 +54,17 @@ private:
     // ===================================================================== //
     // CHECK WHETHER INDEX I IN IN BOUNDS ALONG DIMENSION DIM, INCLUDING HALO
     inline bool _is_inbounds(int i, size_t dim) {
-        return (i < - _nhalo_left[dim] or i > _local_arr_size[dim] + _nhalo_right[dim] - 1);
+        return (i >= - _nhalo_left[dim] and i <= _local_arr_size[dim] + _nhalo_right[dim] - 1);
     }
 
 public:
 // VARIABLES
-    DArrayLayout<NDIMS>            layout; // topologically-aware communicator object
+    DArrayLayout<NDIMS> layout; // topologically-aware communicator object
 
 // FUNCTIONS
     // ===================================================================== //
     // CONTAINER INTERFACE
     using value_type     = T;
-    using DArrayIterator = T*;
 
     // ===================================================================== //
     // CONSTRUCTOR/DESTRUCTOR
@@ -79,10 +78,8 @@ public:
             // define size of local array and number of left/right halo points
             for (auto dim : LinRange(NDIMS)) {
                 _local_arr_size[dim] = _array_size[dim] / layout.size(dim);
-                _nhalo_left[dim]  = layout.has_neighbour_at(BoundaryTag::LEFT, dim)  || layout.is_periodic(dim) ? 
-                                    nhalo_out[dim] : nhalo_in;
-                _nhalo_right[dim] = layout.has_neighbour_at(BoundaryTag::RIGHT, dim) || layout.is_periodic(dim) ? 
-                                    nhalo_out[dim] : nhalo_in;
+                _nhalo_left[dim]  = layout.has_neighbour_at(BoundaryTag::LEFT, dim)  ? nhalo_in : nhalo_out[dim];
+                _nhalo_right[dim] = layout.has_neighbour_at(BoundaryTag::RIGHT, dim) ? nhalo_in : nhalo_out[dim];
 
                 // full size of the data
                 _raw_arr_size[dim] = _local_arr_size[dim] + _nhalo_left[dim] + _nhalo_right[dim];
@@ -114,38 +111,19 @@ public:
     }
 
     // ===================================================================== //
-    // ITERATION OVER ALL DATA
-    DArrayIterator begin() { return _data; }
-    DArrayIterator end()   { return _data + nelements(); }
-
-
-    // ===================================================================== //
     // ITERATOR OVER THE IN-DOMAIN INDICES 
     inline IndexRange<NDIMS> indices () {
         return IndexRange<NDIMS>(_local_arr_size);
     }
 
     // ===================================================================== //
-    // UTILITIES 
-    // ~~~ size of memory buffer, including halo ~~~
-    inline size_t nelements() const {
-        return std::reduce(_raw_arr_size.begin(), _raw_arr_size.end(), 
-                           1, std::multiplies<>());
-    }
-
-    // ~~~ local array size and halo dimension ~~~
-    inline std::array<int, NDIMS>& size() const { 
+    // LOCAL ARRAY SIZE
+    inline const std::array<int, NDIMS>& size() const { 
         return _local_arr_size; 
     }
 
-    inline std::array<int, NDIMS>& raw_size() const { 
-        return _raw_arr_size; 
-    }
-
-    inline int size(size_t dim) { 
-        return _local_arr_size[dim]; 
-    }
-
+    // ===================================================================== //
+    // NUMBER OF HALO POINTS AT A PARTICULAR BOUNDARY
     inline int nhalo(BoundaryTag tag, size_t dim) { 
         switch (tag) {
             case BoundaryTag::LEFT   : return _nhalo_left[dim];
@@ -154,6 +132,17 @@ public:
         }
     }
 
+    // ===================================================================== //
+    // LOCAL ARRAY SIZE, INCLUDING HALO ELEMENTS
+    inline const std::array<int, NDIMS>& raw_size() const { 
+        return _raw_arr_size; 
+    }
+    
+    // ===================================================================== //
+    // SIZE OF MEMORY BUFFER, INCLUDING HALO
+    inline size_t nelements() const {
+        return std::reduce(_raw_arr_size.begin(), _raw_arr_size.end(), 
+                           1, std::multiplies<>());
+    }
 };
-
 }
