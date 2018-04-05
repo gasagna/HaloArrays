@@ -53,20 +53,6 @@ private:
     }
 
     // ===================================================================== //
-    // HELPER FUNCTION
-    inline bool _has_neighbour_at(BoundaryTag tag, size_t dim) {
-        if (_is_periodic[dim]) return true;
-        switch(tag) {
-            case BoundaryTag::LEFT:
-                return _coords[dim] != 0;
-            case BoundaryTag::RIGHT:
-                return _coords[dim] != _size[dim] - 1;
-            case BoundaryTag::CENTER:
-                return true;
-        }
-    }
-
-    // ===================================================================== //
     // CHECK WHETHER WE ARE NOT GETTING OUT OF BOUNDS WITH THE DIMENSION
     void _checkboundsdim(size_t dim) const {
         if ( dim < 0 or dim >= NDIMS )
@@ -137,14 +123,46 @@ public:
     }
 
     // ===================================================================== //
-    // WHETHER THIS PROCESSOR HAS A NEIGHBOUR SHARING A GIVEN HALO bnd
+    // WHETHER THIS PROCESSOR HAS A NEIGHBOUR SHARING A GIVEN BOUNDARY
     inline bool has_neighbour_at(Boundary<NDIMS> bnd) {
         for ( auto dim : LinRange(NDIMS) ) {
-            if ( !_has_neighbour_at(bnd[dim], dim) )
+            if ( !has_neighbour_at(bnd[dim], dim) )
                 return false;
         }
         return true;
     }
+
+    inline bool has_neighbour_at(BoundaryTag tag, size_t dim) {
+        if (_is_periodic[dim]) return true;
+        switch(tag) {
+            case BoundaryTag::LEFT:
+                return _coords[dim] != 0;
+            case BoundaryTag::RIGHT:
+                return _coords[dim] != _size[dim] - 1;
+            case BoundaryTag::CENTER:
+                return true;
+        }
+    }
+
+    // symmetric functions
+    inline bool is_on_boundary() {
+        for (auto bnd : AllBoundaries<NDIMS>() ) {
+            if ( is_on_boundary(bnd) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    inline bool is_on_boundary(Boundary<NDIMS> bnd) {
+        return !has_neighbour_at(bnd);
+    }
+
+    inline bool is_on_boundary(BoundaryTag tag, size_t dim) {
+        return !has_neighbour_at(tag, dim); 
+    }
+
+    
 };
 
 }
