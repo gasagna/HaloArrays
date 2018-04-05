@@ -144,7 +144,8 @@ public:
         }
     }
 
-    // symmetric functions
+    // ===================================================================== //
+    // SYMMETRIC FUNCTIONS
     inline bool is_on_boundary() {
         for (auto bnd : AllBoundaries<NDIMS>() ) {
             if ( is_on_boundary(bnd) ) {
@@ -161,8 +162,6 @@ public:
     inline bool is_on_boundary(BoundaryTag tag, size_t dim) {
         return !has_neighbour_at(tag, dim); 
     }
-
-    
 };
 
 }
