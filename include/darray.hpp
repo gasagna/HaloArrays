@@ -79,9 +79,9 @@ public:
             // define size of local array and number of left/right halo points
             for (auto dim : LinRange(NDIMS)) {
                 _local_arr_size[dim] = _array_size[dim] / layout.size(dim);
-                _nhalo_left[dim]  = layout.has_neighbour_at(HaloRegionTag::LEFT, dim)  || layout.is_periodic(dim) ? 
+                _nhalo_left[dim]  = layout.has_neighbour_at(BoundaryTag::LEFT, dim)  || layout.is_periodic(dim) ? 
                                     nhalo_out[dim] : nhalo_in;
-                _nhalo_right[dim] = layout.has_neighbour_at(HaloRegionTag::RIGHT, dim) || layout.is_periodic(dim) ? 
+                _nhalo_right[dim] = layout.has_neighbour_at(BoundaryTag::RIGHT, dim) || layout.is_periodic(dim) ? 
                                     nhalo_out[dim] : nhalo_in;
 
                 // full size of the data
@@ -146,11 +146,11 @@ public:
         return _local_arr_size[dim]; 
     }
 
-    inline int nhalo(HaloRegionTag tag, size_t dim) { 
+    inline int nhalo(BoundaryTag tag, size_t dim) { 
         switch (tag) {
-            case HaloRegionTag::LEFT   : return _nhalo_left[dim];
-            case HaloRegionTag::RIGHT  : return _nhalo_right[dim];
-            case HaloRegionTag::CENTER : return _local_arr_size[dim];
+            case BoundaryTag::LEFT   : return _nhalo_left[dim];
+            case BoundaryTag::RIGHT  : return _nhalo_right[dim];
+            case BoundaryTag::CENTER : return _local_arr_size[dim];
         }
     }
 
