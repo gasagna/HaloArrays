@@ -1,7 +1,8 @@
 #include "DArrays.hpp"
 #include <catch.hpp>
-#include <array>
 #include <iostream>
+#include <array>
+#include <map>
 
 TEST_CASE("1D tests", "[1D-tests]") {
 
@@ -23,6 +24,30 @@ TEST_CASE("1D tests", "[1D-tests]") {
                                                    { 9, 11},   // 10
                                                    {25,  0}}}; // 26
 
+    // initialize expected value                          rank is_periodic  is_on_boundary
+    std::map<std::pair<int, bool>, bool> expected_1 = { {{ 0,   true},      false},
+                                                        {{ 0,  false},      true},
+                                                        {{10,   true},      false},
+                                                        {{10,  false},      false},
+                                                        {{26,   true},      false},
+                                                        {{26,  false},      true}};
+
+    // initialize expected value                          rank is_periodic  is_on_boundary(LEFT, 0)
+    std::map<std::pair<int, bool>, bool> expected_2 = { {{ 0,   true},      false},
+                                                        {{ 0,  false},      true},
+                                                        {{10,   true},      false},
+                                                        {{10,  false},      false},
+                                                        {{26,   true},      false},
+                                                        {{26,  false},      false}};    
+
+    // initialize expected value                          rank is_periodic  is_on_boundary(RIGHT, 0)
+    std::map<std::pair<int, bool>, bool> expected_3 = { {{ 0,   true},      false},
+                                                        {{ 0,  false},      false},
+                                                        {{10,   true},      false},
+                                                        {{10,  false},      false},
+                                                        {{26,   true},      false},
+                                                        {{26,  false},      true}};                                                                                                            
+
     for (auto periodic1 : {true, false}) {
         std::array<int, 1>  is_periodic = {periodic1};
         DArrays::DArrayLayout<1> layout(MPI_COMM_WORLD, layout_size, is_periodic);
@@ -40,6 +65,18 @@ TEST_CASE("1D tests", "[1D-tests]") {
             
         REQUIRE_THROWS( layout.size(-1) );
         REQUIRE_THROWS( layout.size( 1) );    
+
+        // check is_on_boundary functions, only for the ranks we have defined
+        std::pair<int, bool> key = {layout.rank(), layout.is_periodic(0)};
+
+        if (expected_1.count(key) == 1)
+            REQUIRE( layout.is_on_boundary() == expected_1[key] );
+
+        if (expected_2.count(key) == 1)
+            REQUIRE( layout.is_on_boundary(DArrays::BoundaryTag::LEFT, 0) == expected_2[key] );
+
+        if (expected_3.count(key) == 1)
+            REQUIRE( layout.is_on_boundary(DArrays::BoundaryTag::RIGHT, 0) == expected_3[key] );
 
         // for every processors we want to check
         for (auto j : LinRange(procs.size())) {
@@ -92,6 +129,97 @@ TEST_CASE("2D tests", "[2D-tests]") {
                                                    {21, 22, 23,  3,  5, 12, 13, 14},   //  4
                                                    { 8,  0,  1, 17, 10, 26, 18, 19}}}; //  9
 
+    // we do not text everything because it would be too tedious, we instead check at random
+    // initialize expected value                                rank is_periodic(0) is_periodic(1) is_on_boundary
+    std::map<std::tuple<int, bool, bool>, bool> expected_1 = { {{ 0,   true,          true},        false},
+                                                               {{ 0,  false,         false},         true},
+                                                               {{ 0,  false,          true},         true},
+                                                               {{ 0,   true,         false},         true},                                                
+                                                               {{ 8,   true,          true},        false},
+                                                               {{ 8,  false,         false},         true},
+                                                               {{ 8,  false,          true},         true},
+                                                               {{ 8,   true,         false},         true},                                                
+                                                               {{26,   true,          true},        false},
+                                                               {{26,  false,         false},         true},
+                                                               {{26,  false,          true},         true},
+                                                               {{26,   true,         false},         true},                                    
+                                                               {{18,   true,          true},        false},
+                                                               {{18,  false,         false},         true},
+                                                               {{18,  false,          true},         true},
+                                                               {{18,   true,         false},         true},
+                                                               {{ 4,   true,          true},        false},
+                                                               {{ 4,  false,         false},         true},
+                                                               {{ 4,  false,          true},         true},
+                                                               {{ 4,   true,         false},        false},
+                                                               {{14,   true,          true},        false},
+                                                               {{14,  false,         false},        false},
+                                                               {{14,  false,          true},        false},
+                                                               {{14,   true,         false},        false},
+                                                               {{17,   true,          true},        false},
+                                                               {{17,  false,         false},         true},
+                                                               {{17,  false,          true},        false},
+                                                               {{17,   true,         false},         true}}; 
+
+    // initialize expected value                                rank is_periodic(0) is_periodic(1) is_on_boundary(LEFT, 0)
+    std::map<std::tuple<int, bool, bool>, bool> expected_2 = { {{ 0,  false,         false},        true},
+                                                               {{ 1,   true,         false},       false},
+                                                               {{ 1,   true,          true},       false},
+                                                               {{ 1,   false,         true},        true},
+                                                               {{ 1,   false,        false},        true},
+                                                               {{11,  false,         false},       false},
+                                                               {{18,  false,         false},       false} };
+
+   // initialize expected value                                rank is_periodic(0) is_periodic(1) is_on_boundary(RIGHT, 0)
+    std::map<std::tuple<int, bool, bool>, bool> expected_3 = { {{18,  false,         false},        true},
+                                                               {{22,   true,         false},       false},
+                                                               {{22,   true,          true},       false},
+                                                               {{22,  false,          true},        true},
+                                                               {{22,  false,         false},        true},
+                                                               {{11,  false,         false},       false},
+                                                               {{8,   false,         false},       false} };       
+
+    // initialize expected value                                rank is_periodic(0) is_periodic(1) is_on_boundary(LEFT, 1)
+    std::map<std::tuple<int, bool, bool>, bool> expected_4 = { {{ 0,  false,         false},        true},
+                                                               {{ 9,  false,         false},        true},
+                                                               {{ 9,  false,          true},       false},
+                                                               {{ 9,   true,         false},        true},
+                                                               {{ 9,   true,          true},       false},
+                                                               {{18,  false,         false},        true},
+                                                               {{18,  false,          true},       false},
+                                                               {{18,   true,         false},        true},
+                                                               {{18,   true,          true},       false},
+                                                               {{ 3,  false,         false},       false},
+                                                               {{ 3,  false,          true},       false},
+                                                               {{ 3,   true,         false},       false},
+                                                               {{ 3,   true,          true},       false},
+                                                               {{12,  false,         false},       false},
+                                                               {{12,  false,          true},       false},
+                                                               {{12,   true,         false},       false},
+                                                               {{12,   true,          true},       false},   
+                                                               {{21,  false,         false},       false},
+                                                               {{21,  false,          true},       false},
+                                                               {{21,   true,         false},       false},
+                                                               {{21,   true,          true},       false},
+                                                               {{ 8,  false,         false},       false},
+                                                               {{ 8,  false,          true},       false},
+                                                               {{ 8,   true,         false},       false},
+                                                               {{ 8,   true,          true},       false},
+                                                               {{17,  false,         false},       false},
+                                                               {{17,  false,          true},       false},
+                                                               {{17,   true,         false},       false},
+                                                               {{17,   true,          true},       false},
+                                                               {{26,  false,         false},       false},
+                                                               {{26,  false,          true},       false},
+                                                               {{26,   true,         false},       false},
+                                                               {{26,   true,          true},       false}};
+
+    // initialize expected value                                rank is_periodic(0) is_periodic(1) is_on_boundary(RIGHT, 1)
+    std::map<std::tuple<int, bool, bool>, bool> expected_5 = { {{ 0,  false,         false},       false},
+                                                               {{ 8,  false,         false},        true},
+                                                               {{ 8,  false,          true},       false},
+                                                               {{ 8,   true,         false},        true},
+                                                               {{ 8,   true,          true},       false}};                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+
     for (auto periodic1 : {true, false}) {
         for (auto periodic2 : {true, false}) {
             std::array<int, 2> is_periodic = {periodic1, periodic2};
@@ -109,7 +237,25 @@ TEST_CASE("2D tests", "[2D-tests]") {
                 REQUIRE( layout.size(dim) == layout_size[dim] );
             
             REQUIRE_THROWS( layout.size(-1) );
-            REQUIRE_THROWS( layout.size( 2) );                                        
+            REQUIRE_THROWS( layout.size( 2) );
+
+            // check is_on_boundary functions, only for the ranks we have defined
+            std::tuple<int, bool, bool> key = {layout.rank(), layout.is_periodic(0), layout.is_periodic(1)};
+            
+            if (expected_1.count(key) == 1)
+                REQUIRE( layout.is_on_boundary() == expected_1[key] );      
+
+            if (expected_2.count(key) == 1)
+                REQUIRE( layout.is_on_boundary(DArrays::BoundaryTag::LEFT,  0) == expected_2[key] );        
+
+            if (expected_3.count(key) == 1)
+                REQUIRE( layout.is_on_boundary(DArrays::BoundaryTag::RIGHT, 0) == expected_3[key] );          
+
+            if (expected_4.count(key) == 1)
+                REQUIRE( layout.is_on_boundary(DArrays::BoundaryTag::LEFT, 1) == expected_4[key] );               
+
+            if (expected_5.count(key) == 1)
+                REQUIRE( layout.is_on_boundary(DArrays::BoundaryTag::RIGHT, 1) == expected_5[key] );     
 
             // for every processors we want to check
             for (auto j : LinRange(procs.size())) {
@@ -175,6 +321,9 @@ TEST_CASE("3D tests", "[3D-tests]") {
                 
                 REQUIRE_THROWS( layout.size(-1) );
                 REQUIRE_THROWS( layout.size( 3) );
+
+                // for 3d we do not check the boundary functions, because the code 
+                // is generic and it's been tested for 2D
 
                 // for every processors we want to check
                 for (auto j : LinRange(procs.size())) {
