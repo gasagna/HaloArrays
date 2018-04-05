@@ -29,6 +29,13 @@ TEST_CASE("1D tests", "[1D-tests]") {
                                         proc_grid_size,
                                         is_periodic);
 
+        // check is_periodic
+        for (auto dim : LinRange(1))
+            REQUIRE( layout.is_periodic(dim) == is_periodic[dim] ); 
+
+        REQUIRE_THROWS( layout.is_periodic(-1) );
+        REQUIRE_THROWS( layout.is_periodic( 1) );
+
         // for every processors we want to check
         for (auto j : LinRange(procs.size())) {
             // if it is actually the processor we want to check
@@ -87,6 +94,13 @@ TEST_CASE("2D tests", "[2D-tests]") {
                                             proc_grid_size,
                                             is_periodic);
 
+            // check is_periodic
+            for (auto dim : LinRange(2))
+                REQUIRE( layout.is_periodic(dim) == is_periodic[dim] ); 
+
+            REQUIRE_THROWS( layout.is_periodic(-1) );
+            REQUIRE_THROWS( layout.is_periodic( 2) );                                        
+
             // for every processors we want to check
             for (auto j : LinRange(procs.size())) {
                 // if it is actually the processor we want to check
@@ -139,6 +153,13 @@ TEST_CASE("3D tests", "[3D-tests]") {
                 DArrays::DArrayLayout<3> layout(MPI_COMM_WORLD, 
                                                 proc_grid_size,
                                                 is_periodic);
+
+                // check is_periodic
+                for (auto dim : LinRange(3))
+                    REQUIRE( layout.is_periodic(dim) == is_periodic[dim] ); 
+
+                REQUIRE_THROWS( layout.is_periodic(-1) );
+                REQUIRE_THROWS( layout.is_periodic( 3) );
 
                 // for every processors we want to check
                 for (auto j : LinRange(procs.size())) {
