@@ -34,7 +34,8 @@ private:
     // AN ERROR TO CALL THIS FUNCTION FOR A REGION WHERE THERE IS
     // NO NEIGHBOUR. THIS IS USED AT INITIALISATION ONLY.
     int _rank_of_neighbour_at(HaloRegion<NDIMS> region) {
-        std::array<int, NDIMS> target_coords = _proc_grid_coords;
+        // initialise to current coordinates, then modifies as needed
+        std::array<int, NDIMS> target_coords = _coords;
         int target_proc_rank;
         for ( auto dim : LinRange(NDIMS) ) {
             if (region[dim] == HaloRegionTag::LEFT)
