@@ -6,7 +6,7 @@
 TEST_CASE("1D tests", "[1D-tests]") {
 
     // use this grid size for tests
-    std::array<int, 1> proc_grid_size = {27};
+    std::array<int, 1> layout_size = {27};
 
     // get halo regions for 1d layoutlogy
     auto regions = DArrays::HaloRegions<1>();
@@ -26,7 +26,7 @@ TEST_CASE("1D tests", "[1D-tests]") {
     for (auto periodic1 : {true, false}) {
         std::array<int, 1>  is_periodic = {periodic1};
         DArrays::DArrayLayout<1> layout(MPI_COMM_WORLD, 
-                                        proc_grid_size,
+                                        layout_size,
                                         is_periodic);
 
         // check is_periodic
@@ -35,6 +35,13 @@ TEST_CASE("1D tests", "[1D-tests]") {
 
         REQUIRE_THROWS( layout.is_periodic(-1) );
         REQUIRE_THROWS( layout.is_periodic( 1) );
+
+        // check grid size
+        for (auto dim : LinRange(1))
+            REQUIRE( layout.size(dim) == layout_size[dim] );
+            
+        REQUIRE_THROWS( layout.size(-1) );
+        REQUIRE_THROWS( layout.size( 1) );    
 
         // for every processors we want to check
         for (auto j : LinRange(procs.size())) {
@@ -58,7 +65,7 @@ TEST_CASE("1D tests", "[1D-tests]") {
 TEST_CASE("2D tests", "[2D-tests]") {
 
     // use this grid size for tests
-    std::array<int, 2> proc_grid_size = {3, 9};
+    std::array<int, 2> layout_size = {3, 9};
 
     // get halo regions for 2d layoutlogy
     auto regions = DArrays::HaloRegions<2>();
@@ -91,7 +98,7 @@ TEST_CASE("2D tests", "[2D-tests]") {
         for (auto periodic2 : {true, false}) {
             std::array<int, 2> is_periodic = {periodic1, periodic2};
             DArrays::DArrayLayout<2> layout(MPI_COMM_WORLD, 
-                                            proc_grid_size,
+                                            layout_size,
                                             is_periodic);
 
             // check is_periodic
@@ -99,7 +106,14 @@ TEST_CASE("2D tests", "[2D-tests]") {
                 REQUIRE( layout.is_periodic(dim) == is_periodic[dim] ); 
 
             REQUIRE_THROWS( layout.is_periodic(-1) );
-            REQUIRE_THROWS( layout.is_periodic( 2) );                                        
+            REQUIRE_THROWS( layout.is_periodic( 2) );
+
+            // check grid size
+            for (auto dim : LinRange(2))
+                REQUIRE( layout.size(dim) == layout_size[dim] );
+            
+            REQUIRE_THROWS( layout.size(-1) );
+            REQUIRE_THROWS( layout.size( 2) );                                        
 
             // for every processors we want to check
             for (auto j : LinRange(procs.size())) {
@@ -123,7 +137,7 @@ TEST_CASE("2D tests", "[2D-tests]") {
 TEST_CASE("3D tests", "[3D-tests]") {
 
     // use this grid size for tests
-    std::array<int, 3> proc_grid_size = {3, 3, 3};
+    std::array<int, 3> layout_size = {3, 3, 3};
 
     // get halo regions for 3d layoutlogy
     auto regions = DArrays::HaloRegions<3>();
@@ -151,7 +165,7 @@ TEST_CASE("3D tests", "[3D-tests]") {
             for (auto periodic3 : {true, false}) {
                 std::array<int, 3> is_periodic = {periodic1, periodic2, periodic3};
                 DArrays::DArrayLayout<3> layout(MPI_COMM_WORLD, 
-                                                proc_grid_size,
+                                                layout_size,
                                                 is_periodic);
 
                 // check is_periodic
@@ -160,6 +174,13 @@ TEST_CASE("3D tests", "[3D-tests]") {
 
                 REQUIRE_THROWS( layout.is_periodic(-1) );
                 REQUIRE_THROWS( layout.is_periodic( 3) );
+
+                // check grid size
+                for (auto dim : LinRange(3))
+                    REQUIRE( layout.size(dim) == layout_size[dim] );
+                
+                REQUIRE_THROWS( layout.size(-1) );
+                REQUIRE_THROWS( layout.size( 3) );
 
                 // for every processors we want to check
                 for (auto j : LinRange(procs.size())) {
