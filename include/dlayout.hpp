@@ -67,7 +67,7 @@ private:
 
     // ===================================================================== //
     // CHECK WHETHER WE ARE NOT GETTING OUT OF BOUNDS WITH THE DIMENSION
-    void _checkboundsdim(size_t dim) {
+    void _checkboundsdim(size_t dim) const {
         if ( dim < 0 or dim >= NDIMS )
             throw std::out_of_range("dimension out of range");
     }
