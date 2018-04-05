@@ -78,7 +78,7 @@ public:
         , layout      (layout     ) {
             // define size of local array and number of left/right halo points
             for (auto dim : LinRange(NDIMS)) {
-                _local_arr_size[dim] = _array_size[dim] / layout.grid_size(dim);
+                _local_arr_size[dim] = _array_size[dim] / layout.size(dim);
                 _nhalo_left[dim]  = layout.has_neighbour_at(HaloRegionTag::LEFT, dim)  || layout.is_periodic(dim) ? 
                                     nhalo_out[dim] : nhalo_in;
                 _nhalo_right[dim] = layout.has_neighbour_at(HaloRegionTag::RIGHT, dim) || layout.is_periodic(dim) ? 
