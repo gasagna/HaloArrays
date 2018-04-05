@@ -5,11 +5,11 @@
 
 TEST_CASE("1D tests", "[1D-tests]") {
 
-    // use this grid size for tests
+    // use this layout size for tests
     std::array<int, 1> layout_size = {27};
 
-    // get halo regions for 1d layoutlogy
-    auto regions = DArrays::HaloRegions<1>();
+    // get halo boundaries for 1d layout
+    auto boundaries = DArrays::AllBoundaries<1>();
 
     // check numeric value for a few processors at key locations
     // this is the processor layout. Note MPI use row major layout
@@ -25,9 +25,7 @@ TEST_CASE("1D tests", "[1D-tests]") {
 
     for (auto periodic1 : {true, false}) {
         std::array<int, 1>  is_periodic = {periodic1};
-        DArrays::DArrayLayout<1> layout(MPI_COMM_WORLD, 
-                                        layout_size,
-                                        is_periodic);
+        DArrays::DArrayLayout<1> layout(MPI_COMM_WORLD, layout_size, is_periodic);
 
         // check is_periodic
         for (auto dim : LinRange(1))
@@ -48,12 +46,12 @@ TEST_CASE("1D tests", "[1D-tests]") {
             // if it is actually the processor we want to check
             if (layout.rank() == procs[j]) {
                 // for every neighbour
-                for (auto i : LinRange(regions.size())) {
+                for (auto i : LinRange(boundaries.size())) {
                     // we only check if there is a neighbour, otherwise it should throw
-                    if ( layout.has_neighbour_at(regions[i]) ) {
-                        REQUIRE( layout.rank_of_neighbour_at(regions[i]) == expected[j][i] );
+                    if ( layout.has_neighbour_at(boundaries[i]) ) {
+                        REQUIRE( layout.rank_of_neighbour_at(boundaries[i]) == expected[j][i] );
                     } else {
-                        REQUIRE_THROWS( layout.rank_of_neighbour_at(regions[i]) );
+                        REQUIRE_THROWS( layout.rank_of_neighbour_at(boundaries[i]) );
                     }
                 }
             }
@@ -64,11 +62,11 @@ TEST_CASE("1D tests", "[1D-tests]") {
 
 TEST_CASE("2D tests", "[2D-tests]") {
 
-    // use this grid size for tests
+    // use this layout size for tests
     std::array<int, 2> layout_size = {3, 9};
 
-    // get halo regions for 2d layoutlogy
-    auto regions = DArrays::HaloRegions<2>();
+    // get halo boundaries for 2d layout
+    auto boundaries = DArrays::AllBoundaries<2>();
 
     // check numeric value for a few processors at key locations
     // this is the processor layout. Note MPI use row major layout
@@ -97,9 +95,7 @@ TEST_CASE("2D tests", "[2D-tests]") {
     for (auto periodic1 : {true, false}) {
         for (auto periodic2 : {true, false}) {
             std::array<int, 2> is_periodic = {periodic1, periodic2};
-            DArrays::DArrayLayout<2> layout(MPI_COMM_WORLD, 
-                                            layout_size,
-                                            is_periodic);
+            DArrays::DArrayLayout<2> layout(MPI_COMM_WORLD, layout_size, is_periodic);
 
             // check is_periodic
             for (auto dim : LinRange(2))
@@ -120,12 +116,12 @@ TEST_CASE("2D tests", "[2D-tests]") {
                 // if it is actually the processor we want to check
                 if (layout.rank() == procs[j]) {
                     // for every neighbour
-                    for (auto i : LinRange(regions.size())) {
+                    for (auto i : LinRange(boundaries.size())) {
                         // we only check if there is a neighbour, otherwise it should throw
-                        if ( layout.has_neighbour_at(regions[i]) ) {
-                            REQUIRE( layout.rank_of_neighbour_at(regions[i]) == expected[j][i] );
+                        if ( layout.has_neighbour_at(boundaries[i]) ) {
+                            REQUIRE( layout.rank_of_neighbour_at(boundaries[i]) == expected[j][i] );
                         } else {
-                            REQUIRE_THROWS( layout.rank_of_neighbour_at(regions[i]) );
+                            REQUIRE_THROWS( layout.rank_of_neighbour_at(boundaries[i]) );
                         }
                     }
                 }
@@ -136,11 +132,11 @@ TEST_CASE("2D tests", "[2D-tests]") {
 
 TEST_CASE("3D tests", "[3D-tests]") {
 
-    // use this grid size for tests
+    // use this layout size for tests
     std::array<int, 3> layout_size = {3, 3, 3};
 
-    // get halo regions for 3d layoutlogy
-    auto regions = DArrays::HaloRegions<3>();
+    // get halo boundaries for 3d layout
+    auto boundaries = DArrays::AllBoundaries<3>();
 
     // check numeric value for a few processors at key locations
     // this is the processor layout. Note MPI use row major layout
@@ -164,9 +160,7 @@ TEST_CASE("3D tests", "[3D-tests]") {
         for (auto periodic2 : {true, false}) {
             for (auto periodic3 : {true, false}) {
                 std::array<int, 3> is_periodic = {periodic1, periodic2, periodic3};
-                DArrays::DArrayLayout<3> layout(MPI_COMM_WORLD, 
-                                                layout_size,
-                                                is_periodic);
+                DArrays::DArrayLayout<3> layout(MPI_COMM_WORLD, layout_size, is_periodic);
 
                 // check is_periodic
                 for (auto dim : LinRange(3))
@@ -187,12 +181,12 @@ TEST_CASE("3D tests", "[3D-tests]") {
                     // if it is actually the processor we want to check
                     if (layout.rank() == procs[j]) {
                         // for every neighbour
-                        for (auto i : LinRange(regions.size())) {
+                        for (auto i : LinRange(boundaries.size())) {
                             // we only check if there is a neighbour, otherwise it should throw
-                            if ( layout.has_neighbour_at(regions[i]) ) {
-                                REQUIRE( layout.rank_of_neighbour_at(regions[i]) == expected[j][i] );
+                            if ( layout.has_neighbour_at(boundaries[i]) ) {
+                                REQUIRE( layout.rank_of_neighbour_at(boundaries[i]) == expected[j][i] );
                             } else {
-                                REQUIRE_THROWS( layout.rank_of_neighbour_at(regions[i]) );
+                                REQUIRE_THROWS( layout.rank_of_neighbour_at(boundaries[i]) );
                             }
                         }
                     }

@@ -17,30 +17,30 @@ template <size_t NDIMS>
 class DArrayLayout {
 // VARIABLES
 private:
-    std::map<HaloRegion<NDIMS>, int> _rank_of_neighbour_at_map; // ranks of neighbouring processors
-    std::array<int, NDIMS>                        _is_periodic; // whether the processor grid should wrap around
-    int                                             _comm_size; // the number of processors in the communicator
-    int                                             _comm_rank; // rank of current processor within communicator
-    std::array<int, NDIMS>                             _coords; // coordinates of current processor in the grid
-    std::array<int, NDIMS>                               _size; // the size of the processor grid over which data is distributed
-    MPI_Comm                                             _comm; // communicator connecting all processor over which the array data is distributed
+    std::map<Boundary<NDIMS>, int> _rank_of_neighbour_at_map; // ranks of neighbouring processors
+    std::array<int, NDIMS>                      _is_periodic; // whether the processor grid should wrap around
+    int                                           _comm_size; // the number of processors in the communicator
+    int                                           _comm_rank; // rank of current processor within communicator
+    std::array<int, NDIMS>                           _coords; // coordinates of current processor in the grid
+    std::array<int, NDIMS>                             _size; // the size of the processor grid over which data is distributed
+    MPI_Comm                                           _comm; // communicator connecting all processor over which the array data is distributed
 
 // FUNCTIONS
 private:
     // ===================================================================== //
     // CONSTRUCT THE COORDINATES OF THE PROCESSOR WE NEED TO TALK TO
-    // BASED ON THE HALO REGION WE ARE CONSIDERING. THE CENTER TAG
+    // BASED ON THE HALO BOUNDARY WE ARE CONSIDERING. THE CENTER TAG
     // CORRESPONDS TO A ZERO SHIFT, HENCE IT IS NOT INCLUDED. IT IS
-    // AN ERROR TO CALL THIS FUNCTION FOR A REGION WHERE THERE IS
+    // AN ERROR TO CALL THIS FUNCTION FOR A BOUNDARY WHERE THERE IS
     // NO NEIGHBOUR. THIS IS USED AT INITIALISATION ONLY.
-    int _rank_of_neighbour_at(HaloRegion<NDIMS> region) {
+    int _rank_of_neighbour_at(Boundary<NDIMS> bnd) {
         // initialise to current coordinates, then modifies as needed
         std::array<int, NDIMS> target_coords = _coords;
         int target_proc_rank;
         for ( auto dim : LinRange(NDIMS) ) {
-            if (region[dim] == HaloRegionTag::LEFT)
+            if (bnd[dim] == BoundaryTag::LEFT)
                 target_coords[dim] -= 1;
-            if (region[dim] == HaloRegionTag::RIGHT)
+            if (bnd[dim] == BoundaryTag::RIGHT)
                 target_coords[dim] += 1;
         }
 
@@ -54,14 +54,14 @@ private:
 
     // ===================================================================== //
     // HELPER FUNCTION
-    inline bool _has_neighbour_at(HaloRegionTag tag, size_t dim) {
+    inline bool _has_neighbour_at(BoundaryTag tag, size_t dim) {
         if (_is_periodic[dim]) return true;
         switch(tag) {
-            case HaloRegionTag::LEFT:
+            case BoundaryTag::LEFT:
                 return _coords[dim] != 0;
-            case HaloRegionTag::RIGHT:
+            case BoundaryTag::RIGHT:
                 return _coords[dim] != _size[dim] - 1;
-            case HaloRegionTag::CENTER:
+            case BoundaryTag::CENTER:
                 return true;
         }
     }
@@ -99,9 +99,9 @@ public:
         MPI_Cart_coords(_comm, _comm_rank, NDIMS, _coords.data());
 
         // fill neighbours rank map
-        for (auto region : HaloRegions<NDIMS>()) {
-            if (has_neighbour_at(region)) {
-                _rank_of_neighbour_at_map[region] = _rank_of_neighbour_at(region);
+        for (auto bnd : Boundarys<NDIMS>()) {
+            if (has_neighbour_at(bnd)) {
+                _rank_of_neighbour_at_map[bnd] = _rank_of_neighbour_at(bnd);
             }
         }
     }
@@ -125,9 +125,9 @@ public:
     }
 
     // ===================================================================== //
-    // GET RANK OF NEIGHBOUR PROCESS SHARING A GIVEN HALO REGION
-    inline int rank_of_neighbour_at(HaloRegion<NDIMS> region) const {
-        return _rank_of_neighbour_at_map.at(region);
+    // GET RANK OF NEIGHBOUR PROCESS SHARING A GIVEN HALO bnd
+    inline int rank_of_neighbour_at(Boundary<NDIMS> bnd) const {
+        return _rank_of_neighbour_at_map.at(bnd);
     }
 
     // ===================================================================== //
@@ -137,10 +137,10 @@ public:
     }
 
     // ===================================================================== //
-    // WHETHER THIS PROCESSOR HAS A NEIGHBOUR SHARING A GIVEN HALO REGION
-    inline bool has_neighbour_at(HaloRegion<NDIMS> region) {
+    // WHETHER THIS PROCESSOR HAS A NEIGHBOUR SHARING A GIVEN HALO bnd
+    inline bool has_neighbour_at(Boundary<NDIMS> bnd) {
         for ( auto dim : LinRange(NDIMS) ) {
-            if ( !_has_neighbour_at(region[dim], dim) )
+            if ( !_has_neighbour_at(bnd[dim], dim) )
                 return false;
         }
         return true;
