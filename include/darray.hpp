@@ -104,7 +104,7 @@ public:
     inline T& operator () (INDICES... indices) {
         static_assert(sizeof...(INDICES) == NDIMS,
                       "Number of indices must match array dimension");
-        #if DARRAY_CONFIG_CHECKBOUNDS
+        #if DARRAY_ARRAY_CHECKBOUNDS
             _checkbounds(indices...);
         #endif
         return _data[_tolinearindex(indices...)];

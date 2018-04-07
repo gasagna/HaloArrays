@@ -95,16 +95,16 @@ public:
     // ===================================================================== //
     // GET PROCESSOR GRID SIZE ALONG DIMENSION DIM
     inline int size(size_t dim) const {
-        #if DARRAY_CONFIG_CHECKBOUNDS
+        #if DARRAY_LAYOUT_CHECKBOUNDS
             _checkboundsdim(dim);
         #endif
         return _size[dim];        
     }
 
     // ===================================================================== //
-    // GET WHETHER ARRAY IS PERIODIC ALONG DIMENSION DIM
+    // GET WHETHER LAYOUT IS PERIODIC ALONG DIMENSION DIM
     inline bool is_periodic(size_t dim) const {
-        #if DARRAY_CONFIG_CHECKBOUNDS
+        #if DARRAY_LAYOUT_CHECKBOUNDS
             _checkboundsdim(dim);
         #endif
         return _is_periodic[dim];
