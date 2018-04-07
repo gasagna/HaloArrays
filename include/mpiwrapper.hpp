@@ -1,5 +1,6 @@
 #pragma once
 #include <mpi.h>
+#include "subarray.hpp"
 
 // import iterator facilities
 using namespace DArrays::Iterators;

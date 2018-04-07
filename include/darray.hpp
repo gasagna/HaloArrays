@@ -1,10 +1,14 @@
 #pragma once
 #include <array>
-#include <mpi.h>
+#include "subarray.hpp"
+#include "mpiwrapper.hpp"
 
 namespace DArrays {
 
 using namespace DArrays::Iterators;
+
+// forward declaration
+template <typename T, size_t NDIMS> class SubArray;
 
 template <typename T, size_t NDIMS>
 class DArray {

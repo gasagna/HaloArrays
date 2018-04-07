@@ -1,6 +1,10 @@
 #pragma once
+#include "darray.hpp"
 
 namespace DArrays {
+
+// forward declaration
+template <typename T, size_t NDIMS> class DArray;
 
 ////////////////////////////////////////////////////////
 //                     SubArray                       //
