@@ -113,6 +113,12 @@ public:
     }
 
     // ===================================================================== //
+    // RAW DATA POINTER
+    inline T* data () const {
+        return _data;
+    }
+
+    // ===================================================================== //
     // ITERATOR OVER THE IN-DOMAIN INDICES 
     inline IndexRange<NDIMS> indices () {
         return IndexRange<NDIMS>(_local_arr_size);
