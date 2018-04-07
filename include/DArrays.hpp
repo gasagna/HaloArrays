@@ -2,6 +2,7 @@
 #include "boundaries.hpp"
 #include "dlayout.hpp"
 #include "darray.hpp"
+#include "subarray.hpp"
 #include "mpiwrapper.hpp"
 
 // DEFAULT CONFIGURATION OPTIONS

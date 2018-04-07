@@ -1,93 +1,64 @@
 #pragma once
 
-namespace DArray {
-
+namespace DArrays {
 
 ////////////////////////////////////////////////////////
-//                     SUBARRAY                       //
+//                     SubArray                       //
 ////////////////////////////////////////////////////////
 template <typename T, size_t NDIMS>
-class subarray {
+class SubArray {
 private:
-    std::array<int, NDIMS>         _size; // size of the subarray
     std::array<int, NDIMS>   _raw_origin; // origin within the raw array
-    const DArray<T, NDIMS>&      _parent; // parent array
+    const DArray<T, NDIMS>&      _parent; // handle to parent array
+    std::array<int, NDIMS>         _size; // size of the SubArray
 
-    // ===================================================================== //
-    // FILL SUBARRAY SPECIFICATION DATA
-    template <typename... INDICES>
-    void _init(INDICES... indices) {
-        __init(0, indices...);
-    }
+public:
+    // constructor from boundary element
+    SubArray(const DArray<T, NDIMS>& parent, 
+             const Boundary<NDIMS>& boundary, 
+             const BoundaryIntent& intent) 
+        : _parent (parent) {
+            // construct the size and origin for the case where we want to SEND the data
+            for ( auto dim : LinRange(NDIMS) ) {
+                _size[dim] = _parent.nhalo(boundary[dim], dim);
+                
+                // note that the raw origin is the coordinate including the halo points
+                if (boundary[dim] == BoundaryTag::LEFT)
+                    _raw_origin[dim] = _parent.nhalo(BoundaryTag::LEFT, dim);
 
-    template <typename... INDICES>
-    void __init(size_t dim, int from, int to, INDICES... indices) {
-        #if DARRAY_CONFIG_CHECKBOUNDS
-            _checkparentbounds(dim, from, to);
-        #endif
-        // size of subarray
-        _size[dim]       = to - from + 1;
-
-        // origin of the subarray within the actual underlying data
-        _raw_origin[dim] = from + _parent.nhalo_left(dim);
-
-        // process further indices
-        __init(dim+1, indices...);
-    }
-
-    // base case
-    void __init(size_t dim) {}
-
-    // ===================================================================== //
-    // BOUND CHECKING FOR SUBARRAY CREATION
-    inline void _checkparentbounds(size_t dim, int from, int to) {
-        if (from > to)
-            throw std::out_of_range("invalid subarray specification");
-
-        if !( _parent.is_inbounds(from, dim) and _parent.is_inbounds(to, dim) ) {
-            throw std::out_of_range("invalid subarray specification");
-    }
-
-public: 
-    // constructor from the indices
-    template<typename... INDICES, 
-              typename ENABLER = std::enable_if_t< (... && std::is_integral_v<INDICES>) >>>
-    subarray(const DArray<T, NDIMS>& parent, INDICES... indices) 
-        :_parent (parent) {
-            static_assert(sizeof...(INDICES) == 2*NDIMS,
-                "Number of indices must match array dimension");
-            __init(indices...);
-    }
-
-    // constructor from halo region
-    subarray(const DArray<T, NDIMS>& parent, HaloRegion<NDIMS> region, HaloIntent intent) {
-        // intent == SEND
-        for ( auto dim : LinRange(NDIMS) ) {
-            _size[dim]       = parent.nhalo(region[dim], dim);
-            
-            if region[dim] == LEFT
-                _raw_origin[dim] = 0;
-            if region[dim] == RIGHT
-                _raw_origin[dim] = size[dim] - nhalo(RIGHT, dim);            
-        }
+                if (boundary[dim] == BoundaryTag::RIGHT) 
+                    _raw_origin[dim] = _parent.nhalo(BoundaryTag::LEFT, dim) + 
+                                       _parent.size(dim) - 
+                                       _parent.nhalo(BoundaryTag::RIGHT, dim);            
+            }
         
-        // intent == RECV
-        // for ( auto dim : LinRange(NDIMS) ) {
-            // _raw_origin[dim] -= parent.nhalo()
+            // then shift the origin it if we actually need to RECV the data
+            if ( intent == BoundaryIntent::RECV ) {
+                for ( auto dim : LinRange(NDIMS) ) {
+                    switch ( boundary[dim] ) {
+                        case BoundaryTag::LEFT :
+                            _raw_origin[dim] -= _parent.nhalo(boundary[dim], dim); break;
+                        case BoundaryTag::RIGHT:
+                            _raw_origin[dim] += _parent.nhalo(boundary[dim], dim); break;
+                        case BoundaryTag::CENTER:
+                            break;
+                    }
+                }
+            }
     }
 
     // return parent darray
-    const DArray<T, NDIMS>& parent() {
+    inline const DArray<T, NDIMS>& parent() const {
         return _parent;
     }
 
-    // the size of the subarray
-    std::array<int, NDIMS> size() {
+    // the size of the SubArray
+    inline const std::array<int, NDIMS>& size() const {
         return _size;
     }
 
     // actual origin of the data
-    std::array<int, NDIMS> raw_origin() {
+    inline const std::array<int, NDIMS>& raw_origin() const {
         return _raw_origin;
     }
 };
