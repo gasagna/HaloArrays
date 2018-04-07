@@ -22,13 +22,13 @@ inline void Finalize() {
 //                   MESSAGE TAGS                     //
 ////////////////////////////////////////////////////////
 
-// I hate seeing 0s and 1s around. This function constructs
-// a unique message tag for each halo region.
+// I hate seeing 0s and 1s around. Hence, this function 
+// constructs a unique message tag for each halo region.
 template<size_t NDIMS>
-int message_tag(HaloRegion<NDIMS> region) {
+int message_tag(Boundary<NDIMS> boundary) {
     int tag = 0;
     for ( auto dim : LinRange(NDIMS) )
-        tag += std::pow(10, dim+1)*region[dim];
+        tag += std::pow(10, dim+1)*static_cast<int>(boundary[dim]);
     return tag;
 }
 
