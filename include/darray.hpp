@@ -123,12 +123,18 @@ public:
     }
 
     inline int size(size_t dim) const { 
+        #if DARRAY_LAYOUT_CHECKBOUNDS
+            layout.checkbounds(dim);
+        #endif
         return _local_arr_size[dim]; 
     }
 
     // ===================================================================== //
     // NUMBER OF HALO POINTS AT A PARTICULAR BOUNDARY
     inline int nhalo(BoundaryTag tag, size_t dim) const { 
+        #if DARRAY_LAYOUT_CHECKBOUNDS
+            layout.checkbounds(dim);
+        #endif
         switch (tag) {
             case BoundaryTag::LEFT   : return _nhalo_left[dim];
             case BoundaryTag::RIGHT  : return _nhalo_right[dim];

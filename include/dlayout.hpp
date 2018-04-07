@@ -52,13 +52,6 @@ private:
         return target_proc_rank;
     }
 
-    // ===================================================================== //
-    // CHECK WHETHER WE ARE NOT GETTING OUT OF BOUNDS WITH THE DIMENSION
-    void _checkboundsdim(size_t dim) const {
-        if ( dim < 0 or dim >= NDIMS )
-            throw std::out_of_range("dimension out of range");
-    }
-
 public:
     // ===================================================================== //
     // CONSTRUCTOR
@@ -93,10 +86,17 @@ public:
     }
 
     // ===================================================================== //
+    // CHECK WHETHER WE ARE NOT GETTING OUT OF BOUNDS WITH THE DIMENSION
+    inline void checkbounds(size_t dim) const {
+        if ( dim < 0 or dim >= NDIMS )
+            throw std::out_of_range("dimension out of range");
+    }
+
+    // ===================================================================== //
     // GET PROCESSOR GRID SIZE ALONG DIMENSION DIM
     inline int size(size_t dim) const {
         #if DARRAY_LAYOUT_CHECKBOUNDS
-            _checkboundsdim(dim);
+            checkbounds(dim);
         #endif
         return _size[dim];        
     }
@@ -105,7 +105,7 @@ public:
     // GET WHETHER LAYOUT IS PERIODIC ALONG DIMENSION DIM
     inline bool is_periodic(size_t dim) const {
         #if DARRAY_LAYOUT_CHECKBOUNDS
-            _checkboundsdim(dim);
+            checkbounds(dim);
         #endif
         return _is_periodic[dim];
     }
@@ -133,6 +133,9 @@ public:
     }
 
     inline bool has_neighbour_at(BoundaryTag tag, size_t dim) {
+        #if DARRAY_LAYOUT_CHECKBOUNDS
+            checkbounds(dim);
+        #endif
         if (_is_periodic[dim]) return true;
         switch(tag) {
             case BoundaryTag::LEFT:
@@ -160,6 +163,9 @@ public:
     }
 
     inline bool is_on_boundary(BoundaryTag tag, size_t dim) {
+        #if DARRAY_LAYOUT_CHECKBOUNDS
+            checkbounds(dim);
+        #endif
         return !has_neighbour_at(tag, dim); 
     }
 };
