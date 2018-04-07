@@ -137,3 +137,51 @@ TEST_CASE("1D tests - array", "[1D-tests]") {
         REQUIRE( a.nelements() == 13 );        
     }
 }
+
+TEST_CASE("2D tests - array", "[2D-tests]") {
+
+    // use this grid layout for tests
+    std::array<int, 2> layout_size = {3, 9};
+
+    SECTION("case 1") {
+        std::array<int, 2> is_periodic = {true, true};
+
+        // create layout
+        DArrays::DArrayLayout<2> layout(MPI_COMM_WORLD, 
+                                        layout_size,
+                                        is_periodic);
+
+        // create array 
+        std::array<int, 2> array_size = {3*2, 9*3}; 
+        std::array<int, 2> nhalo_out  = {2};
+        int                nhalo_in   =  4;
+        DArrays::DArray<double, 2> a(layout, array_size, nhalo_out, nhalo_in); 
+
+        // test indexing
+        a(0, 0) = 1; REQUIRE( a(0, 0) == 1 );
+        a(1, 2) = 2; REQUIRE( a(1, 2) == 2 );
+        REQUIRE_THROWS( a(-5, -5) );
+        REQUIRE_THROWS( a(-5,  7) );
+        REQUIRE_THROWS( a( 6, -5) );
+        REQUIRE_THROWS( a( 6,  7) );
+
+        // test nhalo
+        REQUIRE( a.nhalo(DArrays::BoundaryTag::LEFT,   0) == 4 );
+        REQUIRE( a.nhalo(DArrays::BoundaryTag::RIGHT,  0) == 4 );
+        REQUIRE( a.nhalo(DArrays::BoundaryTag::LEFT,   1) == 4 );
+        REQUIRE( a.nhalo(DArrays::BoundaryTag::RIGHT,  1) == 4 );
+
+        // test raw_size
+        std::array<int, 2> expected_1 = {10, 11};
+        REQUIRE( a.raw_size() == expected_1 );
+
+        // test size
+        std::array<int, 2> expected_2 = {2, 3};
+        REQUIRE( a.size() == expected_2 );
+        REQUIRE( a.size(0) == expected_2[0] );
+        REQUIRE( a.size(1) == expected_2[1] );
+
+        // test nelements
+        REQUIRE( a.nelements() == 110 );   
+    }
+}
