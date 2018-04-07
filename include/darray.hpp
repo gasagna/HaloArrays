@@ -119,6 +119,12 @@ public:
     }
 
     // ===================================================================== //
+    // LAYOUT
+    inline const DArrayLayout<NDIMS>& layout () const {
+        return _layout;
+    }
+
+    // ===================================================================== //
     // ITERATOR OVER THE IN-DOMAIN INDICES 
     inline IndexRange<NDIMS> indices () {
         return IndexRange<NDIMS>(_local_arr_size);
@@ -132,7 +138,7 @@ public:
 
     inline int size(size_t dim) const { 
         #if DARRAY_LAYOUT_CHECKBOUNDS
-            layout.checkbounds(dim);
+            _layout.checkbounds(dim);
         #endif
         return _local_arr_size[dim]; 
     }
@@ -141,7 +147,7 @@ public:
     // NUMBER OF HALO POINTS AT A PARTICULAR BOUNDARY
     inline int nhalo(BoundaryTag tag, size_t dim) const { 
         #if DARRAY_LAYOUT_CHECKBOUNDS
-            layout.checkbounds(dim);
+            _layout.checkbounds(dim);
         #endif
         switch (tag) {
             case BoundaryTag::LEFT   : return _nhalo_left[dim];
