@@ -128,7 +128,10 @@ TEST_CASE("1D tests - array", "[1D-tests]") {
 
         // test size
         std::array<int, 1> expected_3 = {5};
-        REQUIRE( a.size() == expected_3 );        
+        REQUIRE( a.size() == expected_3 ); 
+        REQUIRE( a.size(0) == expected_3[0] ); 
+        REQUIRE_THROWS( a.size( 1) ); 
+        REQUIRE_THROWS( a.size(-1) ); 
 
         // test nelements
         REQUIRE( a.nelements() == 13 );        
