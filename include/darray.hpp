@@ -128,7 +128,7 @@ public:
 
     // ===================================================================== //
     // NUMBER OF HALO POINTS AT A PARTICULAR BOUNDARY
-    inline int nhalo(BoundaryTag tag, size_t dim) { 
+    inline int nhalo(BoundaryTag tag, size_t dim) const { 
         switch (tag) {
             case BoundaryTag::LEFT   : return _nhalo_left[dim];
             case BoundaryTag::RIGHT  : return _nhalo_right[dim];
