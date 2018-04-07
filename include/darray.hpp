@@ -122,6 +122,10 @@ public:
         return _local_arr_size; 
     }
 
+    inline int size(size_t dim) const { 
+        return _local_arr_size[dim]; 
+    }
+
     // ===================================================================== //
     // NUMBER OF HALO POINTS AT A PARTICULAR BOUNDARY
     inline int nhalo(BoundaryTag tag, size_t dim) { 
