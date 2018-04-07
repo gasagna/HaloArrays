@@ -153,7 +153,7 @@ TEST_CASE("2D tests - array", "[2D-tests]") {
 
         // create array 
         std::array<int, 2> array_size = {3*2, 9*3}; 
-        std::array<int, 2> nhalo_out  = {2};
+        std::array<int, 2> nhalo_out  = {2, 2};
         int                nhalo_in   =  4;
         DArrays::DArray<double, 2> a(layout, array_size, nhalo_out, nhalo_in); 
 
