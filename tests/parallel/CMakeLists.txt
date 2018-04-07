@@ -19,7 +19,8 @@ set(CMAKE_CXX_STANDARD_LIBRARIES -lmpi)
 file(GLOB TESTFILES "src/test_*.cpp")
 
 # compile with bound checking
-add_definitions(-DDARRAY_CONFIG_CHECKBOUNDS=true)
+add_definitions(-DDARRAY_ARRAY_CHECKBOUNDS=true)
+add_definitions(-DDARRAY_LAYOUT_CHECKBOUNDS=true)
 
 # create executables
 add_executable(runtests src/runtests.cpp ${TESTFILES})
