@@ -86,6 +86,12 @@ public:
     }
 
     // ===================================================================== //
+    // GET COMMUNICATOR
+    inline MPI_Comm communicator() const {
+        return _comm;
+    }
+
+    // ===================================================================== //
     // CHECK WHETHER WE ARE NOT GETTING OUT OF BOUNDS WITH THE DIMENSION
     inline void checkbounds(size_t dim) const {
         if ( dim < 0 or dim >= NDIMS )
