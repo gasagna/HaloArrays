@@ -19,6 +19,7 @@ private:
     std::array<int, NDIMS>    _nhalo_right; // number of halo points on 'right' side (high index)
     std::array<int, NDIMS>     _array_size; // global array size
     std::array<int, NDIMS>     _nhalo_left; // number of halo points on 'left'  side (low index)
+    DArrayLayout<NDIMS>            _layout; // topologically-aware communicator object
     T*                               _data; // actual data
 
 // FUNCTIONS
@@ -62,9 +63,6 @@ private:
     }
 
 public:
-// VARIABLES
-    DArrayLayout<NDIMS> layout; // topologically-aware communicator object
-
 // FUNCTIONS
     // ===================================================================== //
     // CONTAINER INTERFACE
@@ -78,12 +76,12 @@ public:
            std::array<int, NDIMS> array_size,
            std::array<int, NDIMS> nhalo_out, int nhalo_in)
         : _array_size (array_size ) 
-        , layout      (layout     ) {
+        , _layout     (layout     ) {
             // define size of local array and number of left/right halo points
             for (auto dim : LinRange(NDIMS)) {
-                _local_arr_size[dim] = _array_size[dim] / layout.size(dim);
-                _nhalo_left[dim]  = layout.has_neighbour_at(BoundaryTag::LEFT, dim)  ? nhalo_in : nhalo_out[dim];
-                _nhalo_right[dim] = layout.has_neighbour_at(BoundaryTag::RIGHT, dim) ? nhalo_in : nhalo_out[dim];
+                _local_arr_size[dim] = _array_size[dim] / _layout.size(dim);
+                _nhalo_left[dim]  = _layout.has_neighbour_at(BoundaryTag::LEFT, dim)  ? nhalo_in : nhalo_out[dim];
+                _nhalo_right[dim] = _layout.has_neighbour_at(BoundaryTag::RIGHT, dim) ? nhalo_in : nhalo_out[dim];
 
                 // full size of the data
                 _raw_arr_size[dim] = _local_arr_size[dim] + _nhalo_left[dim] + _nhalo_right[dim];
