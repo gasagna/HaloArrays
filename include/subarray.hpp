@@ -19,6 +19,35 @@ private:
 public:
     // constructor from boundary element
     SubArray(const DArray<T, NDIMS>& parent, 
+             BoundaryTag tag, 
+             size_t dim,
+             BoundaryIntent intent) 
+        : _parent     (parent)
+        , _size       (parent.raw_size())
+        , _raw_origin ({0}) {
+
+            // we squeeze the data on this dimension
+            _size[dim] = _parent.nhalo(tag, dim);
+
+            // origin is initialised to 0, except on the specified dimension
+            if (tag == BoundaryTag::LEFT)
+                if ( intent == BoundaryIntent::SEND )
+                    _raw_origin[dim] = _parent.nhalo(BoundaryTag::LEFT, dim);
+
+            if (tag == BoundaryTag::RIGHT) {
+                if ( intent == BoundaryIntent::SEND ) {
+                    _raw_origin[dim] = _parent.nhalo(BoundaryTag::LEFT, dim) + 
+                                       _parent.size(dim) - 
+                                       _parent.nhalo(BoundaryTag::RIGHT, dim);     
+                } else {
+                    _raw_origin[dim] = _parent.nhalo(BoundaryTag::LEFT, dim) + 
+                                       _parent.size(dim);     
+                }
+            }
+        }
+    
+    // constructor from boundary element
+    SubArray(const DArray<T, NDIMS>& parent, 
              const Boundary<NDIMS>& boundary, 
              const BoundaryIntent& intent) 
         : _parent (parent) {
