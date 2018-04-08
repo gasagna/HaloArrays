@@ -17,40 +17,12 @@ template <size_t NDIMS>
 class DArrayLayout {
 // VARIABLES
 private:
-    std::map<Boundary<NDIMS>, int> _rank_of_neighbour_at_map; // ranks of neighbouring processors
     std::array<int, NDIMS>                      _is_periodic; // whether the processor grid should wrap around
     int                                           _comm_size; // the number of processors in the communicator
     int                                           _comm_rank; // rank of current processor within communicator
     std::array<int, NDIMS>                           _coords; // coordinates of current processor in the grid
     std::array<int, NDIMS>                             _size; // the size of the processor grid over which data is distributed
     MPI_Comm                                           _comm; // communicator connecting all processor over which the array data is distributed
-
-// FUNCTIONS
-private:
-    // ===================================================================== //
-    // CONSTRUCT THE COORDINATES OF THE PROCESSOR WE NEED TO TALK TO
-    // BASED ON THE HALO BOUNDARY WE ARE CONSIDERING. THE CENTER TAG
-    // CORRESPONDS TO A ZERO SHIFT, HENCE IT IS NOT INCLUDED. IT IS
-    // AN ERROR TO CALL THIS FUNCTION FOR A BOUNDARY WHERE THERE IS
-    // NO NEIGHBOUR. THIS IS USED AT INITIALISATION ONLY.
-    int _rank_of_neighbour_at(Boundary<NDIMS> bnd) {
-        // initialise to current coordinates, then modifies as needed
-        std::array<int, NDIMS> target_coords = _coords;
-        int target_proc_rank;
-        for ( auto dim : LinRange(NDIMS) ) {
-            if (bnd[dim] == BoundaryTag::LEFT)
-                target_coords[dim] -= 1;
-            if (bnd[dim] == BoundaryTag::RIGHT)
-                target_coords[dim] += 1;
-        }
-
-        // call to the MPI function
-        int ret = MPI_Cart_rank(_comm,             
-                      target_coords.data(),     
-                      &target_proc_rank);
-
-        return target_proc_rank;
-    }
 
 public:
     // ===================================================================== //
@@ -110,9 +82,53 @@ public:
     }
 
     // ===================================================================== //
-    // GET RANK OF NEIGHBOUR PROCESS SHARING A GIVEN HALO bnd
-    inline int rank_of_neighbour_at(Boundary<NDIMS> bnd) const {
-        return _rank_of_neighbour_at_map.at(bnd);
+    // GET RANK OF NEIGHBOUR PROCESS SHARING A GIVEN HALO REGION
+    inline int rank_of_neighbour_at(Boundary<NDIMS> bnd) const {        
+        // return MPI::PROC_NULL if on boundary
+        if ( is_on_boundary(bnd) )
+            return MPI_PROC_NULL;
+
+        // initialise to current coordinates, then modifies as needed
+        std::array<int, NDIMS> target_coords = _coords;
+
+        for ( auto dim : LinRange(NDIMS) ) {
+            if (bnd[dim] == BoundaryTag::LEFT)  target_coords[dim] -= 1;
+            if (bnd[dim] == BoundaryTag::RIGHT) target_coords[dim] += 1;
+        }
+
+        // call to the MPI function
+        int target_proc_rank;
+        int ret = MPI_Cart_rank(_comm,             
+                    target_coords.data(),     
+                    &target_proc_rank);
+
+        return target_proc_rank;
+    }
+
+    inline int rank_of_neighbour_at(BoundaryTag tag, size_t dim) {
+        // return MPI::PROC_NULL if on boundary
+        if ( is_on_boundary(tag, dim) )
+            return MPI_PROC_NULL;
+
+        // initialise to current coordinates, then modifies as needed
+        std::array<int, NDIMS> target_coords = _coords;
+        
+        if (tag == BoundaryTag::LEFT)  target_coords[dim] -= 1;
+        if (tag == BoundaryTag::RIGHT) target_coords[dim] += 1;
+
+        // call to the MPI function
+        int target_proc_rank;
+        int ret = MPI_Cart_rank(_comm,             
+                      target_coords.data(),     
+                      &target_proc_rank);
+
+        return target_proc_rank;
+    }
+    
+    // ===================================================================== //
+    // NUMBER OF PROCESSORS
+    inline int nprocs() const {
+        return _comm_size;
     }
 
     // ===================================================================== //
