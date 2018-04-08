@@ -106,23 +106,9 @@ public:
     }
 
     inline int rank_of_neighbour_at(BoundaryTag tag, size_t dim) {
-        // return MPI::PROC_NULL if on boundary
-        if ( is_on_boundary(tag, dim) )
-            return MPI_PROC_NULL;
-
-        // initialise to current coordinates, then modifies as needed
-        std::array<int, NDIMS> target_coords = _coords;
-        
-        if (tag == BoundaryTag::LEFT)  target_coords[dim] -= 1;
-        if (tag == BoundaryTag::RIGHT) target_coords[dim] += 1;
-
-        // call to the MPI function
-        int target_proc_rank;
-        int ret = MPI_Cart_rank(_comm,             
-                      target_coords.data(),     
-                      &target_proc_rank);
-
-        return target_proc_rank;
+        Boundary<NDIMS> bnd = {BoundaryTag::CENTER};
+        bnd[dim] = tag;
+        return rank_of_neighbour_at(bnd);
     }
     
     // ===================================================================== //
