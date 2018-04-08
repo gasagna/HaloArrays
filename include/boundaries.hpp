@@ -13,7 +13,7 @@ enum class BoundaryTag: int {LEFT = 1, CENTER = 2, RIGHT = 3};
 // tags to specificy whether we are pointing at the region
 // that is supposed to be sent or the region that is supposed
 // to be received
-enum class BoundaryIntent : int {SEND = 0, RECV = 1};
+enum class HaloIntent : int {SEND = -1, RECV = 1};
 
 // specification of the boundary region is an NDIMS array of BoundaryTags
 template<size_t NDIMS>

@@ -9,19 +9,23 @@ using namespace DArrays::Iterators;
 using namespace DArrays::MPI;
 
 // forward declaration
-template <typename T, size_t NDIMS> class SubArray;
+template <typename T, size_t NDIMS> class HaloRegion;
 
+////////////////////////////////////////////////////////
+//                       DArray                       //
+////////////////////////////////////////////////////////
 template <typename T, size_t NDIMS>
 class DArray {
 private:
 // VARIABLES
-    std::array<int, NDIMS> _local_arr_size; // local array size
-    std::array<int, NDIMS>   _raw_arr_size; // local array size, including halo points
-    std::array<int, NDIMS>    _nhalo_right; // number of halo points on 'right' side (high index)
-    std::array<int, NDIMS>     _array_size; // global array size
-    std::array<int, NDIMS>     _nhalo_left; // number of halo points on 'left'  side (low index)
-    DArrayLayout<NDIMS>            _layout; // topologically-aware communicator object
-    T*                               _data; // actual data
+    std::array<int, NDIMS>        _local_arr_size; // local array size
+    std::array<int, NDIMS>          _raw_arr_size; // local array size, including halo points
+    std::array<int, NDIMS>           _nhalo_right; // number of halo points on 'right' side (high index)
+    std::array<int, NDIMS>            _array_size; // global array size
+    std::array<int, NDIMS>            _nhalo_left; // number of halo points on 'left'  side (low index)
+    std::map<int, HaloRegion<T, NDIMS>> _halo_map; // map from integer to halo
+    DArrayLayout<NDIMS>                   _layout; // topologically-aware communicator object
+    T*                                      _data; // actual data
 
 // FUNCTIONS
     // ===================================================================== //
@@ -63,6 +67,15 @@ private:
         return (i >= - _nhalo_left[dim] and i <= _local_arr_size[dim] + _nhalo_right[dim] - 1);
     }
 
+    // ===================================================================== //
+    // map from halo specification to an integer
+    int _halo_map_hashfun(BoundaryTag tag, HaloIntent intent, size_t dim) {
+        #if DARRAY_LAYOUT_CHECKBOUNDS
+            _layout.checkbounds(dim);
+        #endif
+        return (10*dim + static_cast<int>(tag)) * static_cast<int>(intent);
+    }
+
 public:
 // FUNCTIONS
     // ===================================================================== //
@@ -90,6 +103,16 @@ public:
 
             // allocate memory buffer
             _data = new T[nelements()];
+
+            // construct dictionary of the halo regions
+            for (auto tag : {BoundaryTag::LEFT, BoundaryTag::RIGHT}) {
+                for (auto intent : {HaloIntent::SEND, HaloIntent::RECV}) {
+                    for (auto dim : LinRange(NDIMS)) {
+                        _halo_map.emplace(_halo_map_hashfun(tag, intent, dim), 
+                                   HaloRegion<T, NDIMS>(*this, tag, intent, dim));
+                    }
+                }
+            }
     }
 
     ~DArray() {
@@ -115,14 +138,14 @@ public:
 
     // ===================================================================== //
     // RAW DATA POINTER
-    inline T* data () const {
+    inline value_type* data() const {
         return _data;
     }
 
     // ===================================================================== //
     // ITERATE OVER ALL DATA
-    inline T* begin() { return _data; }
-    inline T* end()   { return _data + nelements(); }
+    inline value_type* begin() { return _data; }
+    inline value_type* end()   { return _data + nelements(); }
 
     // ===================================================================== //
     // LAYOUT
@@ -175,6 +198,13 @@ public:
                            1, std::multiplies<>());
     }
 
+    inline HaloRegion<T, NDIMS>& halo(BoundaryTag tag, HaloIntent intent, size_t dim) {
+        #if DARRAY_LAYOUT_CHECKBOUNDS
+            _layout.checkbounds(dim);
+        #endif
+        return _halo_map.find(_halo_map_hashfun(tag, intent, dim))->second;
+    }
+
     // ===================================================================== //
     // UPDATE HALO POINTS
     void swap_halo() {
@@ -182,22 +212,19 @@ public:
             // +-+---------+-+-+     +-+-+---------+-+-+     +-+-+---------+-+
             // | | (i,j-1) |S| | --> |R| |  (i,j)  |S| | --> |R| | (i,j+1) |S|
             // +-+---------+-+-+     +-+-+---------+-+-+     +-+-+---------+-+
-            SubArray<T, NDIMS> tosend_to_right(*this,  BoundaryTag::RIGHT, dim, BoundaryIntent::SEND);
-            SubArray<T, NDIMS> torecv_from_left(*this, BoundaryTag::LEFT,  dim, BoundaryIntent::RECV);
-            sendrecv(tosend_to_right, torecv_from_left, 
+            sendrecv(halo(BoundaryTag::RIGHT, HaloIntent::SEND, dim), 
                      _layout.rank_of_neighbour_at(BoundaryTag::RIGHT, dim),
-                     _layout.rank_of_neighbour_at(BoundaryTag::LEFT, dim),
-                     message_tag<NDIMS>(BoundaryTag::RIGHT, dim));
+                     halo(BoundaryTag::LEFT , HaloIntent::RECV, dim), 
+                     _layout.rank_of_neighbour_at(BoundaryTag::LEFT,  dim));
 
             // +-+---------+-+-+     +-+-+---------+-+-+     +-+-+---------+-+
-            // | | (i,j-1) | |R| <-- |S| |  (i,j)  | |R| <-- |S| | (i,j+1) | |
+            // | | (i,j-1) | |R| <-- | |S|  (i,j)  | |R| <-- | |S| (i,j+1) | |
             // +-+---------+-+-+     +-+-+---------+-+-+     +-+-+---------+-+
-            SubArray<T, NDIMS> tosend_to_left(*this,    BoundaryTag::LEFT,  dim, BoundaryIntent::SEND);
-            SubArray<T, NDIMS> torecv_from_right(*this, BoundaryTag::RIGHT, dim, BoundaryIntent::RECV);
-            sendrecv(tosend_to_left, torecv_from_right,
-                     _layout.rank_of_neighbour_at(BoundaryTag::LEFT, dim),
-                     _layout.rank_of_neighbour_at(BoundaryTag::RIGHT, dim),
-                     message_tag<NDIMS>(BoundaryTag::LEFT,  dim));
+            sendrecv(halo(BoundaryTag::LEFT,  HaloIntent::SEND, dim), 
+                     _layout.rank_of_neighbour_at(BoundaryTag::LEFT,  dim),
+                     halo(BoundaryTag::RIGHT, HaloIntent::RECV, dim), 
+                     _layout.rank_of_neighbour_at(BoundaryTag::RIGHT, dim));
+                     
         }
     }    
 };

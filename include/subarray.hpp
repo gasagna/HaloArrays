@@ -7,35 +7,37 @@ namespace DArrays {
 template <typename T, size_t NDIMS> class DArray;
 
 ////////////////////////////////////////////////////////
-//                     SubArray                       //
+//                     HaloRegion                     //
 ////////////////////////////////////////////////////////
 template <typename T, size_t NDIMS>
-class SubArray {
+class HaloRegion {
 private:
     std::array<int, NDIMS>   _raw_origin; // origin within the raw array
     const DArray<T, NDIMS>&      _parent; // handle to parent array
-    std::array<int, NDIMS>         _size; // size of the SubArray
-
+    std::array<int, NDIMS>         _size; // size of the HaloRegion
+    MPI_Datatype                   _type;
+    
 public:
-    // constructor from boundary element
-    SubArray(const DArray<T, NDIMS>& parent, 
-             BoundaryTag tag, 
-             size_t dim,
-             BoundaryIntent intent) 
+    // ===================================================================== //
+    // CONSTRUCTOR TAG, INTENT AND DIMENSION
+    HaloRegion(const DArray<T, NDIMS>& parent, 
+               BoundaryTag             tag, 
+               HaloIntent              intent,
+               size_t                  dim) 
         : _parent     (parent)
         , _size       (parent.raw_size())
         , _raw_origin ({0}) {
 
-            // we squeeze the data on this dimension
+            // size along dimension is the halo size
             _size[dim] = _parent.nhalo(tag, dim);
 
             // origin is initialised to 0, except on the specified dimension
             if (tag == BoundaryTag::LEFT)
-                if ( intent == BoundaryIntent::SEND )
+                if ( intent == HaloIntent::SEND )
                     _raw_origin[dim] = _parent.nhalo(BoundaryTag::LEFT, dim);
 
             if (tag == BoundaryTag::RIGHT) {
-                if ( intent == BoundaryIntent::SEND ) {
+                if ( intent == HaloIntent::SEND ) {
                     _raw_origin[dim] = _parent.nhalo(BoundaryTag::LEFT, dim) + 
                                        _parent.size(dim) - 
                                        _parent.nhalo(BoundaryTag::RIGHT, dim);     
@@ -44,12 +46,43 @@ public:
                                        _parent.size(dim);     
                 }
             }
-        }
+
+            // create subarray type
+            MPI_Type_create_subarray(NDIMS,
+                                     _parent.raw_size().data(),
+                                     _size.data(),             
+                                     _raw_origin.data(),       
+                                     MPI_ORDER_FORTRAN,                
+                                     MPI_DOUBLE, &_type);
+            MPI_Type_commit(&_type);
+    }
     
-    // constructor from boundary element
-    SubArray(const DArray<T, NDIMS>& parent, 
-             const Boundary<NDIMS>& boundary, 
-             const BoundaryIntent& intent) 
+    // ===================================================================== //    
+    // DESTRUCTOR
+    ~HaloRegion() {
+        MPI_Type_free(&_type);
+    }
+
+    // ===================================================================== //
+    // COPY CONSTRUCTOR
+    HaloRegion(const HaloRegion& reg) 
+        : _raw_origin (reg.raw_origin())
+        , _parent     (reg.parent())
+        , _size       (reg.size()) {
+            MPI_Type_create_subarray(NDIMS,
+                                    _parent.raw_size().data(),
+                                    _size.data(),             
+                                    _raw_origin.data(),       
+                                    MPI_ORDER_FORTRAN,                
+                                    MPI_DOUBLE, &_type);
+            MPI_Type_commit(&_type);
+    }
+                        
+    // ===================================================================== //                
+    // CONSTRUCTOR FROM BOUNDARY ELEMENT
+    HaloRegion(const DArray<T, NDIMS>& parent, 
+               const Boundary<NDIMS>&  boundary, 
+               HaloIntent&             intent) 
         : _parent (parent) {
             // construct the size and origin for the case where we want to SEND the data
             for ( auto dim : LinRange(NDIMS) ) {
@@ -66,7 +99,7 @@ public:
             }
         
             // then shift the origin it if we actually need to RECV the data
-            if ( intent == BoundaryIntent::RECV ) {
+            if ( intent == HaloIntent::RECV ) {
                 for ( auto dim : LinRange(NDIMS) ) {
                     switch ( boundary[dim] ) {
                         case BoundaryTag::LEFT :
@@ -78,19 +111,37 @@ public:
                     }
                 }
             }
+            
+            // create subarray type
+            MPI_Type_create_subarray(NDIMS,
+                                     _parent.raw_size().data(),
+                                     _size.data(),             
+                                     _raw_origin.data(),       
+                                     MPI_ORDER_FORTRAN,                
+                                     MPI_DOUBLE, &_type);
+            MPI_Type_commit(&_type);
     }
 
-    // return parent darray
+    // ===================================================================== //    
+    // RETURN MPI DATA TYPE FOR THE SUBARRAY
+    inline const MPI_Datatype& type() const {
+        return _type;
+    }
+
+    // ===================================================================== //    
+    // RETURN PARENT DARRAY
     inline const DArray<T, NDIMS>& parent() const {
         return _parent;
     }
 
-    // the size of the SubArray
+    // ===================================================================== //
+    // THE SIZE OF THE HALOREGION
     inline const std::array<int, NDIMS>& size() const {
         return _size;
     }
 
-    // actual origin of the data
+    // ===================================================================== //
+    // ACTUAL ORIGIN OF THE DATA
     inline const std::array<int, NDIMS>& raw_origin() const {
         return _raw_origin;
     }
