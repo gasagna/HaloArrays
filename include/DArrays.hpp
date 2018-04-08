@@ -2,7 +2,7 @@
 #include "boundaries.hpp"
 #include "dlayout.hpp"
 #include "darray.hpp"
-#include "subarray.hpp"
+#include "haloregion.hpp"
 #include "mpiwrapper.hpp"
 
 // DEFAULT CONFIGURATION OPTIONS
