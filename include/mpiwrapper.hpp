@@ -33,6 +33,12 @@ int message_tag(Boundary<NDIMS> boundary) {
     return tag;
 }
 
+template<size_t NDIMS>
+int message_tag(BoundaryTag tag, size_t dim) {
+    return 10*dim + static_cast<int>(tag);
+}
+
+
 ////////////////////////////////////////////////////////
 //                 SEND/RECV SUBARRAYS                //
 ////////////////////////////////////////////////////////
