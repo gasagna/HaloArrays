@@ -16,6 +16,18 @@ private:
     const DArray<T, NDIMS>&      _parent; // handle to parent array
     std::array<int, NDIMS>         _size; // size of the HaloRegion
     MPI_Datatype                   _type;
+
+    // ===================================================================== //    
+    // CREATE SUBARRAY TYPE
+    void _make_type(MPI_Datatype type) {
+        MPI_Type_create_subarray(NDIMS,
+                                 _parent.raw_size().data(),
+                                 _size.data(),             
+                                 _raw_origin.data(),       
+                                 MPI_ORDER_FORTRAN,                
+                                 MPI_DOUBLE, &_type);
+        MPI_Type_commit(&_type);
+    }
     
 public:
     // ===================================================================== //
@@ -47,14 +59,8 @@ public:
                 }
             }
 
-            // create subarray type
-            MPI_Type_create_subarray(NDIMS,
-                                     _parent.raw_size().data(),
-                                     _size.data(),             
-                                     _raw_origin.data(),       
-                                     MPI_ORDER_FORTRAN,                
-                                     MPI_DOUBLE, &_type);
-            MPI_Type_commit(&_type);
+            // must be called after the other bits have been constructed
+            _make_type(_type);
     }
     
     // ===================================================================== //    
@@ -69,13 +75,7 @@ public:
         : _raw_origin (reg.raw_origin())
         , _parent     (reg.parent())
         , _size       (reg.size()) {
-            MPI_Type_create_subarray(NDIMS,
-                                    _parent.raw_size().data(),
-                                    _size.data(),             
-                                    _raw_origin.data(),       
-                                    MPI_ORDER_FORTRAN,                
-                                    MPI_DOUBLE, &_type);
-            MPI_Type_commit(&_type);
+            _make_type(_type);
     }
                         
     // ===================================================================== //                
