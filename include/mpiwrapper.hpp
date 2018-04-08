@@ -53,7 +53,7 @@ void sendrecv(SubArray<T, NDIMS>& tosend,
                              tosend.parent().raw_size().data(), // parent raw size
                              tosend.size().data(),              // subarray size
                              tosend.raw_origin().data(),        // raw coordinate of start
-                             MPI_ORDER_C,                 // we have column major data
+                             MPI_ORDER_FORTRAN,                 // we have column major data
                              MPI_DOUBLE, &type_send);
     MPI_Type_commit(&type_send);
 
@@ -63,7 +63,7 @@ void sendrecv(SubArray<T, NDIMS>& tosend,
                              torecv.parent().raw_size().data(), // parent raw size
                              torecv.size().data(),              // subarray size
                              torecv.raw_origin().data(),        // raw coordinate of start
-                             MPI_ORDER_C,                 // we have column major data
+                             MPI_ORDER_FORTRAN,                 // we have column major data
                              MPI_DOUBLE, &type_recv);
     MPI_Type_commit(&type_recv);
 
