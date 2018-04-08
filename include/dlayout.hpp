@@ -76,13 +76,6 @@ public:
 
         // get cartesian coordinates of my rank
         MPI_Cart_coords(_comm, _comm_rank, NDIMS, _coords.data());
-
-        // fill neighbours rank map
-        for (auto bnd : AllBoundaries<NDIMS>()) {
-            if (has_neighbour_at(bnd)) {
-                _rank_of_neighbour_at_map[bnd] = _rank_of_neighbour_at(bnd);
-            }
-        }
     }
 
     // ===================================================================== //
