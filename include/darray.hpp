@@ -20,7 +20,7 @@ private:
     std::array<int, NDIMS>    _nhalo_right; // number of halo points on 'right' side (high index)
     std::array<int, NDIMS>     _array_size; // global array size
     std::array<int, NDIMS>     _nhalo_left; // number of halo points on 'left'  side (low index)
-    DArrayLayout<NDIMS>            _layout; // topologically-aware communicator object
+    DArrayLayout<NDIMS>            _layout; // topologically-aware communicator object
     T*                               _data; // actual data
 
 // FUNCTIONS
@@ -178,15 +178,27 @@ public:
     // ===================================================================== //
     // UPDATE HALO POINTS
     void swap_halo() {
-        // loop over the boundary regions and send/recv 
-        for ( auto boundary : AllBoundaries<NDIMS>() ) {
-            if ( layout.has_neighbour_at(boundary) ) {
-                sendrecv(subarray(*this, boundary, BoundaryIntent::SEND), 
-                         subarray(*this, boundary, BoundaryIntent::RECV),
-                         layout.rank(), layout.rank_of_neighbour_at(boundary),
-                         message_tag(boundary));
-            }
+        for ( auto dim : LinRange(NDIMS) ) {
+            // +-+---------+-+-+     +-+-+---------+-+-+     +-+-+---------+-+
+            // | | (i,j-1) |S| | --> |R| |  (i,j)  |S| | --> |R| | (i,j+1) |S|
+            // +-+---------+-+-+     +-+-+---------+-+-+     +-+-+---------+-+
+            SubArray<T, NDIMS> tosend_to_right(*this,  BoundaryTag::RIGHT, dim, BoundaryIntent::SEND);
+            SubArray<T, NDIMS> torecv_from_left(*this, BoundaryTag::LEFT,  dim, BoundaryIntent::RECV);
+            sendrecv(tosend_to_right, torecv_from_left, 
+                     _layout.rank_of_neighbour_at(BoundaryTag::RIGHT, dim),
+                     _layout.rank_of_neighbour_at(BoundaryTag::LEFT, dim),
+                     message_tag<NDIMS>(BoundaryTag::RIGHT, dim));
+
+            // +-+---------+-+-+     +-+-+---------+-+-+     +-+-+---------+-+
+            // | | (i,j-1) | |R| <-- |S| |  (i,j)  | |R| <-- |S| | (i,j+1) | |
+            // +-+---------+-+-+     +-+-+---------+-+-+     +-+-+---------+-+
+            SubArray<T, NDIMS> tosend_to_left(*this,    BoundaryTag::LEFT,  dim, BoundaryIntent::SEND);
+            SubArray<T, NDIMS> torecv_from_right(*this, BoundaryTag::RIGHT, dim, BoundaryIntent::RECV);
+            sendrecv(tosend_to_left, torecv_from_right,
+                     _layout.rank_of_neighbour_at(BoundaryTag::LEFT, dim),
+                     _layout.rank_of_neighbour_at(BoundaryTag::RIGHT, dim),
+                     message_tag<NDIMS>(BoundaryTag::LEFT,  dim));
         }
-    }       
+    }    
 };
 }
