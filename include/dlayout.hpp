@@ -130,7 +130,7 @@ public:
 
     // ===================================================================== //
     // WHETHER THIS PROCESSOR HAS A NEIGHBOUR SHARING A GIVEN BOUNDARY
-    inline bool has_neighbour_at(Boundary<NDIMS> bnd) {
+    inline bool has_neighbour_at(Boundary<NDIMS> bnd) const {
         for ( auto dim : LinRange(NDIMS) ) {
             if ( !has_neighbour_at(bnd[dim], dim) )
                 return false;
@@ -138,7 +138,7 @@ public:
         return true;
     }
 
-    inline bool has_neighbour_at(BoundaryTag tag, size_t dim) {
+    inline bool has_neighbour_at(BoundaryTag tag, size_t dim) const {
         #if DARRAY_LAYOUT_CHECKBOUNDS
             checkbounds(dim);
         #endif
@@ -155,7 +155,7 @@ public:
 
     // ===================================================================== //
     // SYMMETRIC FUNCTIONS
-    inline bool is_on_boundary() {
+    inline bool is_on_boundary() const {
         for (auto bnd : AllBoundaries<NDIMS>() ) {
             if ( is_on_boundary(bnd) ) {
                 return true;
@@ -164,11 +164,11 @@ public:
         return false;
     }
 
-    inline bool is_on_boundary(Boundary<NDIMS> bnd) {
+    inline bool is_on_boundary(Boundary<NDIMS> bnd) const {
         return !has_neighbour_at(bnd);
     }
 
-    inline bool is_on_boundary(BoundaryTag tag, size_t dim) {
+    inline bool is_on_boundary(BoundaryTag tag, size_t dim) const {
         #if DARRAY_LAYOUT_CHECKBOUNDS
             checkbounds(dim);
         #endif
