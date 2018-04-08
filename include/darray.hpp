@@ -119,6 +119,11 @@ public:
     }
 
     // ===================================================================== //
+    // ITERATE OVER ALL DATA
+    inline T* begin() { return _data; }
+    inline T* end()   { return _data + nelements(); }
+
+    // ===================================================================== //
     // LAYOUT
     inline const DArrayLayout<NDIMS>& layout () const {
         return _layout;
