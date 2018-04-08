@@ -6,6 +6,7 @@
 namespace DArrays {
 
 using namespace DArrays::Iterators;
+using namespace DArrays::MPI;
 
 // forward declaration
 template <typename T, size_t NDIMS> class SubArray;
