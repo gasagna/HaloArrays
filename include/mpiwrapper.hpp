@@ -43,21 +43,45 @@ int message_tag(BoundaryTag tag, size_t dim) {
 //                 SEND/RECV SUBARRAYS                //
 ////////////////////////////////////////////////////////
 template <typename T, size_t NDIMS>
-void send(subarray<T, NDIMS> sub, int dest, MESSAGETAG tag) {
+void sendrecv(SubArray<T, NDIMS>& tosend, 
+              SubArray<T, NDIMS>& torecv, 
+              int dest_rank, int src_rank, int msgtag) {
+
+    // create type_send
     MPI_Datatype type_send;
-    MPI_Type_create_subarray(PARENTNDIMS,                // parent number of dimensions
-                             sub.parent().size().data(), // parent size
-                             sub.size().data(),          // subarray size
-                             sub.raw_origin().data(),    // coordinate of start
-                             MPI_ORDER_FORTRAN,          // we have column major data
-                             T, &type_send);
+    MPI_Type_create_subarray(NDIMS,                             // parent number of dimensions
+                             tosend.parent().raw_size().data(), // parent raw size
+                             tosend.size().data(),              // subarray size
+                             tosend.raw_origin().data(),        // raw coordinate of start
+                             MPI_ORDER_C,                 // we have column major data
+                             MPI_DOUBLE, &type_send);
     MPI_Type_commit(&type_send);
-    MPI_Send(sub.parent().data(),
-             1,
-             type_send,
-             dest,
-             tag,
-             sub.parent().communicator());
-    MPI_Type_free(&type_send);
+
+    // create type_recv
+    MPI_Datatype type_recv;
+    MPI_Type_create_subarray(NDIMS,                             // parent number of dimensions
+                             torecv.parent().raw_size().data(), // parent raw size
+                             torecv.size().data(),              // subarray size
+                             torecv.raw_origin().data(),        // raw coordinate of start
+                             MPI_ORDER_C,                 // we have column major data
+                             MPI_DOUBLE, &type_recv);
+    MPI_Type_commit(&type_recv);
+
+    // actual call
+    MPI_Sendrecv(tosend.parent().data(),
+                 1,
+                 type_send,
+                 dest_rank,
+                 msgtag,
+                 torecv.parent().data(),
+                 1,
+                 type_recv,
+                 src_rank,
+                 msgtag,
+                 torecv.parent().layout().communicator(), 
+                 MPI_STATUS_IGNORE);
+
+    MPI_Type_free(&type_send); MPI_Type_free(&type_recv);
 }
+
 }
