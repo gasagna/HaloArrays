@@ -80,7 +80,7 @@ public:
 
     // ===================================================================== //
     // GET COMMUNICATOR
-    inline MPI_Comm communicator() const {
+    inline const MPI_Comm& communicator() const {
         return _comm;
     }
 
