@@ -1,8 +1,29 @@
+#pragma once
+#include <initializer_list>
+#include <functional>
+#include <iostream>
+#include <numeric>
+#include <array>
+#include <map>
+#include <mpi.h>
+
+namespace DArrays {
+
+// ===================================================================== //
+// check whether we are not getting out of bounds with the dimension
+inline void _checkdims(size_t dim, size_t NDIMS) {
+    // dim < 0 never, for size_t
+    if ( dim >= NDIMS )
+        throw std::out_of_range("dimension out of range");
+}
+
+}
+
 #include "iterators.hpp"
-#include "boundaries.hpp"
+#include "haloregionspec.hpp"
 #include "dlayout.hpp"
-#include "darray.hpp"
-#include "haloregion.hpp"
+// #include "darray.hpp"
+// #include "subarray.hpp"
 #include "mpiwrapper.hpp"
 
 // DEFAULT CONFIGURATION OPTIONS
