@@ -1,5 +1,4 @@
 #pragma once
-#include <array>
 #include "subarray.hpp"
 #include "mpiwrapper.hpp"
 
@@ -11,25 +10,22 @@ using namespace DArrays::MPI;
 // forward declaration
 template <typename T, size_t NDIMS> class HaloRegion;
 
-////////////////////////////////////////////////////////
-//                       DArray                       //
-////////////////////////////////////////////////////////
+// ===================================================================== //
+// DArray
 template <typename T, size_t NDIMS>
 class DArray {
 private:
-// VARIABLES
-    std::array<int, NDIMS>        _local_arr_size; // local array size
-    std::array<int, NDIMS>          _raw_arr_size; // local array size, including halo points
-    std::array<int, NDIMS>           _nhalo_right; // number of halo points on 'right' side (high index)
-    std::array<int, NDIMS>            _array_size; // global array size
-    std::array<int, NDIMS>            _nhalo_left; // number of halo points on 'left'  side (low index)
-    std::map<int, HaloRegion<T, NDIMS>> _halo_map; // map from integer to halo
-    DArrayLayout<NDIMS>                   _layout; // topologically-aware communicator object
-    T*                                      _data; // actual data
+    std::array<int, NDIMS>            _local_arr_size; // local array size
+    std::array<int, NDIMS>              _raw_arr_size; // local array size, including halo points
+    std::map<int, SubArray<T, NDIMS>>   _subarray_map; // map from integer to halo
+    std::array<int, NDIMS>               _nhalo_right; // number of halo points on 'right' side (high index)
+    std::array<int, NDIMS>                _array_size; // global array size
+    std::array<int, NDIMS>                _nhalo_left; // number of halo points on 'left'  side (low index)
+    DArrayLayout<NDIMS>                       _layout; // topologically-aware communicator object
+    T*                                          _data; // actual data
 
-// FUNCTIONS
     // ===================================================================== //
-    // INDEXING INTO LINEAR MEMORY BUFFER
+    // indexing into linear memory buffer
     template<typename... INDICES>
     inline size_t _tolinearindex(INDICES... indices) {
         return __tolinearindex(0, indices...);
@@ -46,7 +42,7 @@ private:
     }
 
     // ===================================================================== //
-    // BOUND CHECKING
+    // bound checking
     template <typename... INDICES>
     inline void _checkbounds(INDICES... indices) {
         return __checkbounds(0, indices...);
@@ -62,57 +58,55 @@ private:
     }
 
     // ===================================================================== //
-    // CHECK WHETHER INDEX I IN IN BOUNDS ALONG DIMENSION DIM, INCLUDING HALO
+    // check whether index i in in bounds along dimension dim, including halo
     inline bool _is_inbounds(int i, size_t dim) {
         return (i >= - _nhalo_left[dim] and i <= _local_arr_size[dim] + _nhalo_right[dim] - 1);
     }
 
     // ===================================================================== //
-    // map from halo specification to an integer
-    int _halo_map_hashfun(BoundaryTag tag, HaloIntent intent, size_t dim) {
-        #if DARRAY_LAYOUT_CHECKBOUNDS
-            _layout.checkbounds(dim);
-        #endif
-        return (10*dim + static_cast<int>(tag)) * static_cast<int>(intent);
+    // index into the dictionary HaloRegionSpec->HaloRegion
+    inline SubArray<T, NDIMS>& _get_subarray(HaloRegionSpec<NDIMS> spec, HaloIntent intent) {
+        return _subarray_map.find(spec.hash(intent))->second;
     }
 
 public:
-// FUNCTIONS
     // ===================================================================== //
-    // CONTAINER INTERFACE
-    using value_type     = T;
+    // container interface
+    using value_type = T;
 
     // ===================================================================== //
-    // CONSTRUCTOR/DESTRUCTOR
+    // constructor/destructor
     DArray() = delete;
 
     DArray(DArrayLayout<NDIMS> layout, 
            std::array<int, NDIMS> array_size,
-           std::array<int, NDIMS> nhalo_out, int nhalo_in)
+           std::array<int, NDIMS> nhalo_out, 
+           std::array<int, NDIMS> nhalo_in)
         : _array_size (array_size ) 
         , _layout     (layout     ) {
             // define size of local array and number of left/right halo points
             for (auto dim : LinRange(NDIMS)) {
                 _local_arr_size[dim] = _array_size[dim] / _layout.size(dim);
-                _nhalo_left[dim]  = _layout.has_neighbour_at(BoundaryTag::LEFT, dim)  ? nhalo_in : nhalo_out[dim];
-                _nhalo_right[dim] = _layout.has_neighbour_at(BoundaryTag::RIGHT, dim) ? nhalo_in : nhalo_out[dim];
+                _nhalo_left[dim]  = _layout.has_neighbour_at(Boundary::LEFT,  dim) ? nhalo_in[dim] : nhalo_out[dim];
+                _nhalo_right[dim] = _layout.has_neighbour_at(Boundary::RIGHT, dim) ? nhalo_in[dim] : nhalo_out[dim];
 
                 // full size of the data
                 _raw_arr_size[dim] = _local_arr_size[dim] + _nhalo_left[dim] + _nhalo_right[dim];
             }
 
+            // note that the halo size cannot be larger then the data itself
+            for (auto dim : LinRange(NDIMS))
+                if (std::max(_nhalo_left[dim], _nhalo_right[dim]) >= _local_arr_size[dim])
+                    throw std::invalid_argument("too many halo points for local array size");
+
             // allocate memory buffer
             _data = new T[nelements()];
 
-            // construct dictionary of the halo regions
-            for (auto tag : {BoundaryTag::LEFT, BoundaryTag::RIGHT}) {
-                for (auto intent : {HaloIntent::SEND, HaloIntent::RECV}) {
-                    for (auto dim : LinRange(NDIMS)) {
-                        _halo_map.emplace(_halo_map_hashfun(tag, intent, dim), 
-                                   HaloRegion<T, NDIMS>(*this, tag, intent, dim));
-                    }
-                }
-            }
+            // construct dictionary of the halo regions used for halo swap
+            for (auto& spec : std::get<NDIMS>(_halospeclist))
+                for (auto intent : {HaloIntent::SEND, HaloIntent::RECV})
+                    _subarray_map.emplace(spec.hash(intent), 
+                                          SubArray<T, NDIMS>(*this, spec, intent));
     }
 
     ~DArray() {
@@ -120,12 +114,10 @@ public:
     }
 
     // ===================================================================== //
-    // INDEXING INTO LINEAR MEMORY BUFFER
-    // ~~~ linear indexing ~~~
+    // indexing into linear memory buffer
     const inline T& operator [] (size_t i) const { return _data[i]; }
           inline T& operator [] (size_t i)       { return _data[i]; }
 
-    // ~~~ local cartesian indexing - first index is contiguous ~~~
     template <typename... INDICES>
     inline T& operator () (INDICES... indices) {
         static_assert(sizeof...(INDICES) == NDIMS,
@@ -137,95 +129,76 @@ public:
     }
 
     // ===================================================================== //
-    // RAW DATA POINTER
+    // raw data pointer
     inline value_type* data() const {
         return _data;
     }
 
     // ===================================================================== //
-    // ITERATE OVER ALL DATA
+    // iterate over all data
     inline value_type* begin() { return _data; }
     inline value_type* end()   { return _data + nelements(); }
 
     // ===================================================================== //
-    // LAYOUT
+    // layout
     inline const DArrayLayout<NDIMS>& layout () const {
         return _layout;
     }
 
     // ===================================================================== //
-    // ITERATOR OVER THE IN-DOMAIN INDICES 
+    // iterator over the in-domain indices 
     inline IndexRange<NDIMS> indices () {
         return IndexRange<NDIMS>(_local_arr_size);
     }
 
     // ===================================================================== //
-    // LOCAL ARRAY SIZE
+    // local array size
     inline const std::array<int, NDIMS>& size() const { 
         return _local_arr_size; 
     }
 
     inline int size(size_t dim) const { 
         #if DARRAY_LAYOUT_CHECKBOUNDS
-            _layout.checkbounds(dim);
+            _checkdims(dim, NDIMS);
         #endif
         return _local_arr_size[dim]; 
     }
 
     // ===================================================================== //
-    // NUMBER OF HALO POINTS AT A PARTICULAR BOUNDARY
-    inline int nhalo(BoundaryTag tag, size_t dim) const { 
+    // number of halo points at a particular boundary  
+    inline int nhalo_points(Boundary bnd, size_t dim) const { 
         #if DARRAY_LAYOUT_CHECKBOUNDS
-            _layout.checkbounds(dim);
+            _checkdims(dim, NDIMS);
         #endif
-        switch (tag) {
-            case BoundaryTag::LEFT   : return _nhalo_left[dim];
-            case BoundaryTag::RIGHT  : return _nhalo_right[dim];
-            case BoundaryTag::CENTER : return _local_arr_size[dim];
+        switch (bnd) {
+            case Boundary::LEFT     : return _nhalo_left[dim];
+            case Boundary::RIGHT    : return _nhalo_right[dim];
+            case Boundary::CENTER   : return _local_arr_size[dim];
+            case Boundary::WILDCARD : return _raw_arr_size[dim];
         }
     }
 
     // ===================================================================== //
-    // LOCAL ARRAY SIZE, INCLUDING HALO ELEMENTS
+    // local array size, including halo elements
     inline const std::array<int, NDIMS>& raw_size() const { 
         return _raw_arr_size; 
     }
     
     // ===================================================================== //
-    // SIZE OF MEMORY BUFFER, INCLUDING HALO
+    // size of memory buffer, including halo
     inline size_t nelements() const {
         return std::reduce(_raw_arr_size.begin(), _raw_arr_size.end(), 
                            1, std::multiplies<>());
     }
-
-    inline HaloRegion<T, NDIMS>& halo(BoundaryTag tag, HaloIntent intent, size_t dim) {
-        #if DARRAY_LAYOUT_CHECKBOUNDS
-            _layout.checkbounds(dim);
-        #endif
-        return _halo_map.find(_halo_map_hashfun(tag, intent, dim))->second;
-    }
-
+    
     // ===================================================================== //
-    // UPDATE HALO POINTS
+    // swap halo points with neighbours
     void swap_halo() {
-        for ( auto dim : LinRange(NDIMS) ) {
-            // +-+---------+-+-+     +-+-+---------+-+-+     +-+-+---------+-+
-            // | | (i,j-1) |S| | --> |R| |  (i,j)  |S| | --> |R| | (i,j+1) |S|
-            // +-+---------+-+-+     +-+-+---------+-+-+     +-+-+---------+-+
-            sendrecv(halo(BoundaryTag::RIGHT, HaloIntent::SEND, dim), 
-                     _layout.rank_of_neighbour_at(BoundaryTag::RIGHT, dim),
-                     halo(BoundaryTag::LEFT , HaloIntent::RECV, dim), 
-                     _layout.rank_of_neighbour_at(BoundaryTag::LEFT,  dim));
-
-            // +-+---------+-+-+     +-+-+---------+-+-+     +-+-+---------+-+
-            // | | (i,j-1) | |R| <-- | |S|  (i,j)  | |R| <-- | |S| (i,j+1) | |
-            // +-+---------+-+-+     +-+-+---------+-+-+     +-+-+---------+-+
-            sendrecv(halo(BoundaryTag::LEFT,  HaloIntent::SEND, dim), 
-                     _layout.rank_of_neighbour_at(BoundaryTag::LEFT,  dim),
-                     halo(BoundaryTag::RIGHT, HaloIntent::RECV, dim), 
-                     _layout.rank_of_neighbour_at(BoundaryTag::RIGHT, dim));
-                     
-        }
+        for (const auto& halo_spec : std::get<NDIMS>(_halospeclist))
+            sendrecv(_get_subarray(halo_spec, HaloIntent::SEND),           
+                     _layout.rank_of_neighbour_at(halo_spec),
+                     _get_subarray(opposite(halo_spec), HaloIntent::RECV), 
+                     _layout.rank_of_neighbour_at(opposite(halo_spec)));
     }    
 };
 }

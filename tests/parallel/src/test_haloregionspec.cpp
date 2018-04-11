@@ -20,9 +20,10 @@ TEST_CASE("haloregionspec", "test_1") {
     REQUIRE( os1[0] == Boundary::LEFT );
     REQUIRE( os1.hash(HaloIntent::SEND) ==  -1 );
 
+
     HaloRegionSpec<2> s2(Boundary::LEFT, Boundary::WILDCARD);
-    REQUIRE( s2.hash(HaloIntent::SEND) ==  -81  );
-    REQUIRE( s2.hash(HaloIntent::RECV) ==  +81  );
+    REQUIRE( s2.hash(HaloIntent::SEND)  ==  -81  );
+    REQUIRE( s2.hash(HaloIntent::RECV)  ==  +81  );
     REQUIRE( s2[0] == Boundary::LEFT );
     REQUIRE( s2[1] == Boundary::WILDCARD );
     REQUIRE_THROWS( s2[-1] );
@@ -32,6 +33,12 @@ TEST_CASE("haloregionspec", "test_1") {
     REQUIRE( os2[0] == Boundary::RIGHT );
     REQUIRE( os2[1] == Boundary::WILDCARD );
     REQUIRE( os2.hash(HaloIntent::SEND) ==  -84 );
+
+
+    HaloRegionSpec<2> s2b(Boundary::LEFT, 0); // L*
+    REQUIRE( s2b.hash(HaloIntent::SEND) ==  -81  );
+    REQUIRE( s2b.hash(HaloIntent::RECV) ==  +81  );
+
 
     HaloRegionSpec<3> s3(Boundary::LEFT, Boundary::CENTER, Boundary::WILDCARD);
     REQUIRE( s3.hash(HaloIntent::SEND) ==  -821  );
@@ -44,5 +51,10 @@ TEST_CASE("haloregionspec", "test_1") {
     REQUIRE( os3[1] == Boundary::CENTER );
     REQUIRE( os3[2] == Boundary::WILDCARD );
     REQUIRE( os3.hash(HaloIntent::SEND) ==  -824 );
+
+
+    HaloRegionSpec<3> s3b(Boundary::LEFT, 1); // *L*
+    REQUIRE( s3b.hash(HaloIntent::SEND) ==  -818  );
+    REQUIRE( s3b.hash(HaloIntent::RECV) ==  +818 );
 
 }

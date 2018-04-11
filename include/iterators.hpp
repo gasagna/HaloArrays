@@ -162,7 +162,7 @@ public:
     // CONSTRUCTORS
     // from integer arguments
     template <typename... NS,
-            typename ENABLER = std::enable_if_t< (... && std::is_integral_v<NS>) >>
+              typename ENABLER = std::enable_if_t< (... && std::is_integral_v<NS>) >>
     IndexRange(NS... ns) {
         static_assert(sizeof...(ns) == NDIMS, "too many indiced for iterator dimension");
         _size = {ns...};

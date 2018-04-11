@@ -8,6 +8,13 @@ namespace DArrays {
 // tags for the the left, center and right boundaries
 enum class Boundary: int {LEFT = 1, CENTER = 2, RIGHT = 4, WILDCARD = 8};
 
+// enable the first constructor of HaloSpecRegion to a list of 
+// Boundaries, to avoid ambiguity with the third constructor
+template<typename T>
+struct is_boundary { static const bool value = false; };
+
+template<>
+struct is_boundary<Boundary> { static const bool value = true; };
 
 // ===================================================================== //
 // tags for sending or receiving the halo region 
@@ -24,6 +31,7 @@ private:
 
     void _init_hash() {
         // compute hash
+        _uhash = 0;
         for (auto dim : LinRange(NDIMS))
             _uhash += std::pow(10, dim)*static_cast<int>(_speclist[dim]);
 
@@ -33,13 +41,26 @@ private:
     }
 
 public:
+
     // constructors
-    template <typename... SPECLIST>
+    template <typename... SPECLIST, 
+              typename ENABLER = std::enable_if_t< (... && is_boundary<SPECLIST>::value) >>
     HaloRegionSpec(SPECLIST... speclist) 
-        : _speclist ({speclist...}), _uhash (0) { _init_hash(); }
+        : _speclist ({speclist...}) { _init_hash(); }
     
+    // from array
     HaloRegionSpec(const std::array<Boundary, NDIMS>& speclist) 
-        : _speclist (speclist), _uhash (0) { _init_hash(); }
+        : _speclist (speclist) { _init_hash(); }
+
+    // from boundary and dimension
+    HaloRegionSpec(Boundary bnd, size_t dim) { 
+        #if DARRAY_LAYOUT_CHECKBOUNDS
+            _checkdims(dim, NDIMS);
+        #endif
+        // construct array with all wildcards, then set the correct dimension
+        _speclist.fill(Boundary::WILDCARD); _speclist[dim] = bnd;
+        _init_hash(); 
+    }
 
     // read only array like object
     inline const Boundary operator [] (size_t dim) const {

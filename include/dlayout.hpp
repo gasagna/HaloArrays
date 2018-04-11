@@ -19,21 +19,6 @@ private:
     std::array<int, NDIMS>        _size; // the size of the processor grid over which data is distributed
     MPI_Comm                      _comm; // communicator connecting all processor over which the array data is distributed
 
-    // ===================================================================== //
-    // helper
-    inline bool _has_neighbour_at(Boundary tag, size_t dim) const {
-        #if DARRAY_LAYOUT_CHECKBOUNDS
-            _checkdims(dim, NDIMS);
-        #endif
-
-        if (_is_periodic[dim])      return true;
-        if (tag == Boundary::LEFT)  return _coords[dim] != 0;
-        if (tag == Boundary::RIGHT) return _coords[dim] != _size[dim] - 1;
-
-        // CENTER and WILDCARD are neutral
-        return true;
-    }
-
 public:
     // ===================================================================== //
     // constructor
@@ -99,13 +84,19 @@ public:
             if (halo[dim] == Boundary::RIGHT) target_coords[dim] += 1;
         }
 
-        // call to the MPI function
+    // call to the MPI function
         int target_proc_rank;
         int ret = MPI_Cart_rank(_comm,             
                     target_coords.data(),     
                     &target_proc_rank);
 
         return target_proc_rank;
+    }
+
+    // ===================================================================== //
+    // get rank of neighbour process sharing a given halo region
+    inline int rank_of_neighbour_at(Boundary bnd, size_t dim) const {        
+        return rank_of_neighbour_at(HaloRegionSpec<NDIMS>(bnd, dim));
     }
     
     // ===================================================================== //
@@ -124,8 +115,22 @@ public:
     // whether this processor has a neighbour on given halo
     inline bool has_neighbour_at(const HaloRegionSpec<NDIMS>& halo) const {
         for (auto dim : LinRange(NDIMS))
-            if (!_has_neighbour_at(halo[dim], dim))
+            if (!has_neighbour_at(halo[dim], dim))
                 return false;
+        return true;
+    }
+
+    inline bool has_neighbour_at(Boundary bnd, size_t dim) const {
+        #if DARRAY_LAYOUT_CHECKBOUNDS
+            _checkdims(dim, NDIMS);
+        #endif
+
+        if (_is_periodic[dim])      return true;
+        if (bnd == Boundary::LEFT)  return _coords[dim] != 0;
+        if (bnd == Boundary::RIGHT) return _coords[dim] != _size[dim] - 1;
+
+        // CENTER and WILDCARD are neutral, because the answer to the question
+        // has_neighbour_at(CENTER/WILDCARD, 0) is yes, i.e. the process itself
         return true;
     }
 };

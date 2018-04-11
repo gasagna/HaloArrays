@@ -3,6 +3,7 @@
 #include <functional>
 #include <iostream>
 #include <numeric>
+#include <algorithm>
 #include <array>
 #include <map>
 #include <mpi.h>
@@ -22,8 +23,8 @@ inline void _checkdims(size_t dim, size_t NDIMS) {
 #include "iterators.hpp"
 #include "haloregionspec.hpp"
 #include "dlayout.hpp"
-// #include "darray.hpp"
-// #include "subarray.hpp"
+#include "darray.hpp"
+#include "subarray.hpp"
 #include "mpiwrapper.hpp"
 
 // DEFAULT CONFIGURATION OPTIONS
