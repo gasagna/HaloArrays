@@ -8,7 +8,7 @@ using namespace DArrays::Iterators;
 using namespace DArrays::MPI;
 
 // forward declaration
-template <typename T, size_t NDIMS> class HaloRegion;
+template <typename T, size_t NDIMS> class SubArray;
 
 // ===================================================================== //
 // DArray
@@ -64,7 +64,7 @@ private:
     }
 
     // ===================================================================== //
-    // index into the dictionary HaloRegionSpec->HaloRegion
+    // index into the dictionary HaloRegionSpec->SubArray
     inline SubArray<T, NDIMS>& _get_subarray(HaloRegionSpec<NDIMS> spec, HaloIntent intent) {
         return _subarray_map.find(spec.hash(intent))->second;
     }
