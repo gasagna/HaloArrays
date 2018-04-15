@@ -1,0 +1,5 @@
+- map from T to mpi_type in the subarray
+- allow arbitrary memory layouts - requires indexing code refactoring
+- expression templates
+- implement data transpose for slab decomposition 
+- implement data transpose for pencil decomposition 
