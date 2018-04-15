@@ -69,6 +69,16 @@ private:
         return _subarray_map.find(spec.hash(intent))->second;
     }
 
+    // Compute local array size along given dimension, given size of processor grid 
+    // It is an error not to have an equal division of grid points across processors
+    inline int _get_local_array_size(int _array_size, int _layout_size) {
+        div_t divrem;
+        divrem = div(_array_size, _layout_size);
+        if (divrem.rem != 0)
+            throw std::invalid_argument("incompatible array size and processor grid size");
+        return divrem.quot;
+    }
+
 public:
     // ===================================================================== //
     // container interface
@@ -86,7 +96,7 @@ public:
         , _layout     (layout     ) {
             // define size of local array and number of left/right halo points
             for (auto dim : LinRange(NDIMS)) {
-                _local_arr_size[dim] = _array_size[dim] / _layout.size(dim);
+                _local_arr_size[dim] = _get_local_array_size(_array_size[dim], _layout.size(dim));
                 _nhalo_left[dim]  = _layout.has_neighbour_at(Boundary::LEFT,  dim) ? nhalo_in[dim] : nhalo_out[dim];
                 _nhalo_right[dim] = _layout.has_neighbour_at(Boundary::RIGHT, dim) ? nhalo_in[dim] : nhalo_out[dim];
 

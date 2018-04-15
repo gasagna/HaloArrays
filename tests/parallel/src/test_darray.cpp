@@ -143,6 +143,25 @@ TEST_CASE("darray - 2D", "test_2]") {
     // use this grid layout for tests
     std::array<int, 2> layout_size = {3, 9};
 
+    SECTION("test grid size and array size compatibility") {
+        std::array<int, 2> is_periodic = {false, false};
+
+        // create layout
+        DArrayLayout<2> layout(MPI_COMM_WORLD, layout_size, is_periodic);
+
+        // create array 
+        std::array<int, 2> array_size = {3*5 + 1, 9*5+1}; 
+        std::array<int, 2> nhalo_out  = {2, 2};
+        std::array<int, 2> nhalo_in   = {4, 2};
+
+        auto fun = [&] () { 
+            DArray<double, 2> a(layout, array_size, nhalo_out, nhalo_in); 
+            return 1;
+        };
+
+        REQUIRE_THROWS( fun() );
+    }
+
     SECTION("periodic = true, true") {
         std::array<int, 2> is_periodic = {true, true};
 
